@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = 8080;
+const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 8080;
 const MIME_TYPES = {
   '.html': 'text/html',
   '.css': 'text/css',
@@ -39,6 +39,22 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}/index.html`);
+function startServer(port) {
+  server.listen(port, () => {
+    console.log(`Server is running at http://localhost:${port}/index.html`);
+  });
+}
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    const nextPort = server.address() ? server.address().port + 1 : DEFAULT_PORT + 1;
+    console.log(`Port ${DEFAULT_PORT} is already in use. Automatically switching to http://localhost:${nextPort}/index.html...`);
+    setTimeout(() => {
+      startServer(nextPort);
+    }, 200);
+  } else {
+    console.error('Server error:', err);
+  }
 });
+
+startServer(DEFAULT_PORT);
