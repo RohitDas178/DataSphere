@@ -1,0 +1,1861 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataSphere Analytics | Intelligent Client-Side EDA & AI Report Engine</title>
+  <meta name="description"
+    content="State-of-the-art client-side data exploration, automated preprocessing, anomaly cleansing, and zero-API statistical AI intelligence reporting.">
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+
+  <div class="app-layout">
+
+    <!-- =====================================================================
+         SIDEBAR WORKFLOW NAVIGATION
+         ===================================================================== -->
+    <aside class="sidebar">
+
+      <!-- Brand Header -->
+      <div class="brand-header">
+        <div class="brand-logo">
+          <i data-lucide="bar-chart-3"></i>
+        </div>
+        <div class="brand-text">
+          <h1>DataSphere</h1>
+          <span>Analytics Engine</span>
+        </div>
+      </div>
+
+      <!-- Navigation Steps -->
+      <div class="nav-section">
+        <div class="nav-title">Analysis Workflow</div>
+        <nav class="nav-workflow">
+
+          <button class="nav-step-btn active" data-tab="uploadTab" id="navUpload">
+            <div class="step-num">01</div>
+            <div class="step-details">
+              <span class="step-name">Upload Dataset</span>
+              <span class="step-subtitle">CSV, XLSX, XLS, JSON</span>
+            </div>
+          </button>
+
+          <button class="nav-step-btn" data-tab="exploreTab" id="navExplore">
+            <div class="step-num">02</div>
+            <div class="step-details">
+              <span class="step-name">Explore & Select</span>
+              <span class="step-subtitle">Profiles & Target Attributes</span>
+            </div>
+          </button>
+
+          <button class="nav-step-btn" data-tab="preprocessingTab" id="navPreprocessing">
+            <div class="step-num">03</div>
+            <div class="step-details">
+              <span class="step-name">Data Preprocessing</span>
+              <span class="step-subtitle">Anomaly & Quality Cleansing</span>
+            </div>
+          </button>
+
+          <button class="nav-step-btn" data-tab="analysisTab" id="navAnalysis">
+            <div class="step-num">04</div>
+            <div class="step-details">
+              <span class="step-name">Visual Analysis</span>
+              <span class="step-subtitle">Interactive Charts & EDA</span>
+            </div>
+          </button>
+
+          <button class="nav-step-btn" data-tab="reportTab" id="navReport">
+            <div class="step-num">05</div>
+            <div class="step-details">
+              <span class="step-name">AI Intelligence Report</span>
+              <span class="step-subtitle">Summaries, Findings & Charts</span>
+            </div>
+          </button>
+
+        </nav>
+      </div>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <div class="privacy-badge">
+          <i data-lucide="shield-check"></i>
+          <span>100% Client-Side & Secure</span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- =====================================================================
+         MAIN CONTENT AREA
+         ===================================================================== -->
+    <main class="main-wrapper">
+
+      <!-- Topbar Header -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="active-step-indicator">
+            <span class="step-pill" id="currentStepPill">Step 01 / 05</span>
+            <h2 class="topbar-title" id="currentTabTitle">Upload Dataset</h2>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <!-- Dataset status badge -->
+          <div class="dataset-badge">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">No Dataset Loaded</span>
+          </div>
+
+          <!-- Theme switcher button -->
+          <button class="btn-icon" id="themeToggleBtn" title="Toggle Light/Dark Theme">
+            <i data-lucide="sun" id="themeIcon"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Body Container -->
+      <div class="content-body">
+
+        <!-- Multi-Dataset Catalog Switcher Ribbon (Visible when datasets exist) -->
+        <div class="multi-dataset-ribbon" id="multiDatasetRibbonContainer" style="display: none;">
+          <!-- Dynamically populated by app.js -->
+        </div>
+
+        <!-- =================================================================
+             TAB 1: UPLOAD DATASET
+             ================================================================= -->
+        <section class="tab-pane active" id="uploadTab">
+
+          <div class="section-header">
+            <div class="section-title-wrap">
+              <h2><i data-lucide="upload-cloud"></i> Upload Datasets (Single or Multi-File Simultaneous)</h2>
+              <p>Upload one or multiple CSV, Excel, TSV, or JSON datasets simultaneously, or quick-test with preloaded demo datasets.</p>
+            </div>
+          </div>
+
+          <!-- File Upload Zone -->
+          <div class="upload-hero" id="dropZone">
+            <input type="file" id="fileInput" accept=".csv,.tsv,.xlsx,.xls,.json" multiple style="display: none;">
+
+            <div class="upload-icon-circle">
+              <i data-lucide="upload"></i>
+            </div>
+
+            <h3>Drag & Drop Single or Multiple Dataset Files Here</h3>
+            <p>Drop one or multiple CSV, TSV, Excel, or JSON files simultaneously for parallel ingestion and multi-dataset analytical workspaces.</p>
+
+            <button class="btn btn-primary btn-lg" id="browseFileBtn">
+              <i data-lucide="folder-open"></i> Browse Files from Device (Multi-Select Enabled)
+            </button>
+
+            <div class="format-tags">
+              <span class="format-tag">.CSV</span>
+              <span class="format-tag">.TSV</span>
+              <span class="format-tag">.XLSX</span>
+              <span class="format-tag">.XLS</span>
+              <span class="format-tag">.JSON</span>
+            </div>
+          </div>
+
+          <!-- Loaded File Details Card (Hidden initially) -->
+          <div class="file-loaded-banner" id="fileSuccessBanner" style="display: none;">
+            <div class="file-loaded-info">
+              <div class="file-loaded-icon">
+                <i data-lucide="check"></i>
+              </div>
+              <div>
+                <h4 id="loadedFileName" style="font-size: 1.1rem; font-weight: 700;">dataset.csv</h4>
+                <p id="loadedFileMeta" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+                  1,200 rows • 12 columns • 142 KB
+                </p>
+              </div>
+            </div>
+            <button class="btn btn-primary" id="btnProceedToExplore">
+              Proceed to Dataset Explorer <i data-lucide="arrow-right"></i>
+            </button>
+          </div>
+
+          <!-- Cross-Dataset Relational Join & Merge Studio (Visible when >= 2 datasets loaded) -->
+          <div class="dataset-join-card" id="relationalJoinStudio" style="display: none;">
+            <div class="card-title-bar">
+              <div>
+                <h3 style="color: var(--secondary);"><i data-lucide="git-merge"></i> Cross-Dataset Relational Join & Merge Studio</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+                  Perform professional relational algebra: merge dimensions and facts on common primary/foreign keys or vertically append batch telemetry.
+                </p>
+              </div>
+            </div>
+
+            <div class="join-builder-grid">
+              <div class="form-group">
+                <label for="joinTableASelect">Table A (Primary / Left Table)</label>
+                <select class="select-control" id="joinTableASelect" onchange="window.renderRelationalJoinStudio()"></select>
+              </div>
+
+              <div class="form-group">
+                <label for="joinKeyASelect">Join Key (Table A Column)</label>
+                <select class="select-control" id="joinKeyASelect" onchange="window.updateJoinRationale()"></select>
+              </div>
+
+              <div class="form-group">
+                <label for="joinTypeSelect">Relational Operation / Mode</label>
+                <select class="select-control" id="joinTypeSelect" onchange="window.updateJoinRationale()">
+                  <option value="left" selected>Left Outer Join (Preserve All Table A)</option>
+                  <option value="inner">Inner Join (Strict Key Match Intersection)</option>
+                  <option value="full">Full Outer Join (Union All Unmatched Rows)</option>
+                  <option value="union">Vertical Concatenate (Union / Stack Rows)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="joinTableBSelect">Table B (Secondary / Right Table)</label>
+                <select class="select-control" id="joinTableBSelect" onchange="window.renderRelationalJoinStudio()"></select>
+              </div>
+
+              <div class="form-group">
+                <label for="joinKeyBSelect">Join Key (Table B Column)</label>
+                <select class="select-control" id="joinKeyBSelect" onchange="window.updateJoinRationale()"></select>
+              </div>
+            </div>
+
+            <div class="join-rationale-box" id="joinRationaleText">
+              <!-- Populated dynamically with PDA rationales -->
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+              <button class="btn btn-primary" id="btnExecuteJoin" onclick="window.executeDatasetJoin()">
+                <i data-lucide="play"></i> Execute Relational Join & Create Combined Dataset <i data-lucide="arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+
+          <!-- Preloaded Demo Datasets Section -->
+          <div class="sample-datasets-section">
+            <div class="section-header">
+              <div class="section-title-wrap">
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main);">
+                  <i data-lucide="sparkles"></i> Or Quick-Test with Demo Datasets
+                </h3>
+                <p>Click any pre-packaged dataset below to load it instantly with zero setup.</p>
+              </div>
+            </div>
+
+            <div class="sample-grid">
+
+              <!-- Sample 1: E-Commerce -->
+              <div class="sample-card" data-sample="ecommerce">
+                <div>
+                  <div class="sample-card-header">
+                    <div class="sample-badge-icon sample-badge-ecommerce">
+                      <i data-lucide="shopping-cart"></i>
+                    </div>
+                    <h4>E-Commerce Sales & Demographics</h4>
+                  </div>
+                  <p>Customer orders, revenue, profit margins, product categories, discounts, customer ratings, and
+                    shipping regions.</p>
+                </div>
+                <div class="sample-meta">
+                  <span>100 records • 8 attributes</span>
+                  <span style="color: var(--primary-light); font-weight: 600;">Load Demo →</span>
+                </div>
+              </div>
+
+              <!-- Sample 2: Healthcare -->
+              <div class="sample-card" data-sample="healthcare">
+                <div>
+                  <div class="sample-card-header">
+                    <div class="sample-badge-icon sample-badge-health">
+                      <i data-lucide="activity"></i>
+                    </div>
+                    <h4>Healthcare Patient Diagnostic Metrics</h4>
+                  </div>
+                  <p>Patient clinical vitals: Age, Blood Pressure, Glucose, Cholesterol, BMI, Diagnosis outcome, and
+                    Hospital stay.</p>
+                </div>
+                <div class="sample-meta">
+                  <span>90 records • 8 attributes</span>
+                  <span style="color: var(--accent-emerald); font-weight: 600;">Load Demo →</span>
+                </div>
+              </div>
+
+              <!-- Sample 3: HR & Employee -->
+              <div class="sample-card" data-sample="hr">
+                <div>
+                  <div class="sample-card-header">
+                    <div class="sample-badge-icon sample-badge-hr">
+                      <i data-lucide="users"></i>
+                    </div>
+                    <h4>Employee Performance & Salary Data</h4>
+                  </div>
+                  <p>Corporate employee profiles: Department, Experience Years, Annual Salary, Performance Score, and
+                    Remote work status.</p>
+                </div>
+                <div class="sample-meta">
+                  <span>80 records • 8 attributes</span>
+                  <span style="color: var(--accent-amber); font-weight: 600;">Load Demo →</span>
+                </div>
+              </div>
+
+              <!-- Sample 4: Environmental / Weather -->
+              <div class="sample-card" data-sample="environment">
+                <div>
+                  <div class="sample-card-header">
+                    <div class="sample-badge-icon sample-badge-sensors">
+                      <i data-lucide="cloud-sun"></i>
+                    </div>
+                    <h4>Global Air Quality & Weather Sensors</h4>
+                  </div>
+                  <p>Urban sensor telemetry: Temperature, Humidity, AQI, PM2.5, Carbon levels, Wind Speed, and City
+                    location.</p>
+                </div>
+                <div class="sample-meta">
+                  <span>85 records • 8 attributes</span>
+                  <span style="color: var(--secondary); font-weight: 600;">Load Demo →</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </section>
+
+        <!-- =================================================================
+             TAB 2: DATASET EXPLORATION & ATTRIBUTE SELECTOR
+             ================================================================= -->
+        <section class="tab-pane" id="exploreTab">
+
+          <div class="section-header">
+            <div class="section-title-wrap">
+              <h2><i data-lucide="compass"></i> Explore Dataset & Choose Target Attribute</h2>
+              <p>Review attribute types, missing rates, and distributions. Pick your primary target attribute and select
+                features to analyze.</p>
+            </div>
+            <button class="btn btn-primary" id="btnGoToPreprocessing">
+              Continue to Preprocessing <i data-lucide="arrow-right"></i>
+            </button>
+          </div>
+
+          <!-- KPI Summary Strip -->
+          <div class="stats-row" id="exploreKpis">
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span>Total Rows</span>
+                <h4 id="kpiTotalRows">0</h4>
+              </div>
+              <div class="kpi-icon"><i data-lucide="layers"></i></div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span>Total Columns</span>
+                <h4 id="kpiTotalCols">0</h4>
+              </div>
+              <div class="kpi-icon"><i data-lucide="columns"></i></div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span>Numeric Features</span>
+                <h4 id="kpiNumericCols">0</h4>
+              </div>
+              <div class="kpi-icon"><i data-lucide="hash"></i></div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span>Categorical Features</span>
+                <h4 id="kpiCategoricalCols">0</h4>
+              </div>
+              <div class="kpi-icon"><i data-lucide="tag"></i></div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span>Missing Values</span>
+                <h4 id="kpiMissingCount">0</h4>
+              </div>
+              <div class="kpi-icon" style="color: var(--accent-amber);"><i data-lucide="alert-circle"></i></div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-info">
+                <span>Duplicate Rows</span>
+                <h4 id="kpiDuplicateCount">0</h4>
+              </div>
+              <div class="kpi-icon" style="color: var(--accent-rose);"><i data-lucide="copy"></i></div>
+            </div>
+          </div>
+
+          <!-- Attribute Selection Master Toolbar -->
+          <div class="glass-card">
+            <div class="card-title-bar">
+              <div>
+                <h3><i data-lucide="check-square"></i> Dataset Attributes & Role Assignment</h3>
+                <p>Click <strong style="color: var(--secondary);">★ Set as Target</strong> on the attribute you want to
+                  analyze primarily, and toggle checkboxes for all features to include.</p>
+              </div>
+
+              <!-- Quick Action Chips -->
+              <div class="attr-filters">
+                <button class="filter-chip active" id="filterAll">All (<span id="countAllAttrs">0</span>)</button>
+                <button class="filter-chip" id="filterNumeric">Numeric (<span id="countNumAttrs">0</span>)</button>
+                <button class="filter-chip" id="filterCategorical">Categorical (<span
+                    id="countCatAttrs">0</span>)</button>
+                <button class="btn btn-sm btn-secondary" id="btnSelectAllAttrs">Select All</button>
+                <button class="btn btn-sm btn-secondary" id="btnDeselectAllAttrs">Deselect All</button>
+              </div>
+            </div>
+
+            <!-- Search box -->
+            <div class="attr-toolbar">
+              <div class="search-box">
+                <i data-lucide="search"></i>
+                <input type="text" id="attrSearchInput" placeholder="Search attributes...">
+              </div>
+              <div style="font-size: 0.82rem; color: var(--text-muted);">
+                Selected for Analysis: <strong id="selectedCountBadge" style="color: var(--primary-light);">0</strong> /
+                <span id="totalAttrsCount">0</span>
+              </div>
+            </div>
+
+            <!-- Attributes Cards Grid -->
+            <div class="attributes-grid" id="attributesGrid">
+              <!-- Dynamically Populated by explorer.js -->
+            </div>
+          </div>
+
+          <!-- Live Dataset Table Preview -->
+          <div class="glass-card">
+            <div class="card-title-bar">
+              <div>
+                <h3><i data-lucide="table"></i> Live Dataset Preview</h3>
+                <p>Interactive preview of the dataset rows with missing value alerts.</p>
+              </div>
+              <div class="search-box">
+                <i data-lucide="search"></i>
+                <input type="text" id="tableSearchInput" placeholder="Filter rows...">
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <table class="data-table" id="rawDataTable">
+                <thead>
+                  <tr id="rawTableHead"></tr>
+                </thead>
+                <tbody id="rawTableBody"></tbody>
+              </table>
+            </div>
+
+            <div class="table-footer">
+              <span id="tablePaginationInfo">Showing 1-10 of 100 rows</span>
+              <div class="pagination-controls">
+                <button class="btn btn-sm btn-secondary" id="tablePrevBtn"><i data-lucide="chevron-left"></i>
+                  Previous</button>
+                <span id="tableCurrentPage" style="font-weight: 700; padding: 0 8px;">Page 1</span>
+                <button class="btn btn-sm btn-secondary" id="tableNextBtn">Next <i
+                    data-lucide="chevron-right"></i></button>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- =================================================================
+             TAB 3: DATA PREPROCESSING & GUIDED CLEANSING SUITE
+             ================================================================= -->
+        <section class="tab-pane" id="preprocessingTab">
+
+          <div class="section-header">
+            <div class="section-title-wrap">
+              <h2><i data-lucide="wand-2"></i> Guided Preprocessing & Anomaly Cleansing Suite</h2>
+              <p>Step-by-step guided workflow: Understand the rationale, inspect data flaws, customize transformations, or skip non-essential steps with full progression control.</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn btn-secondary btn-sm" id="btnResetPrepWalkthrough" title="Reset Walkthrough to Step 1">
+                <i data-lucide="rotate-ccw"></i> Reset Walkthrough
+              </button>
+              <button class="btn btn-primary" id="btnProceedToAnalysis">
+                Continue to Analysis <i data-lucide="arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Preprocessing Stepper Ribbon -->
+          <div class="prep-stepper-wrapper">
+            <div class="prep-stepper-header">
+              <div class="prep-stepper-title">
+                <i data-lucide="list-checks" style="color: var(--primary-light);"></i>
+                <h4>Preprocessing Workflow Walkthrough</h4>
+              </div>
+              <div class="prep-progress-percent" id="prepProgressPercent">Step 1 of 6 • 16% Complete</div>
+            </div>
+
+            <div class="prep-progress-track">
+              <div class="prep-progress-fill" id="prepProgressFill" style="width: 16.6%;"></div>
+            </div>
+
+            <div class="prep-stepper-nav" id="prepStepperNav">
+              <!-- Step 1 Stepper Button -->
+              <button class="prep-stepper-step active" data-step="1" id="stepBtn1">
+                <div class="prep-step-top">
+                  <span class="prep-step-num">STEP 01</span>
+                  <div class="prep-step-status-icon" id="stepIcon1"><i data-lucide="activity" style="width: 15px; height: 15px;"></i></div>
+                </div>
+                <div class="prep-step-name">Quality Diagnostics</div>
+                <span class="prep-step-badge in-progress" id="stepBadge1">Active</span>
+              </button>
+
+              <!-- Step 2 Stepper Button -->
+              <button class="prep-stepper-step locked" data-step="2" id="stepBtn2">
+                <div class="prep-step-top">
+                  <span class="prep-step-num">STEP 02</span>
+                  <div class="prep-step-status-icon" id="stepIcon2"><i data-lucide="lock" style="width: 15px; height: 15px;"></i></div>
+                </div>
+                <div class="prep-step-name">Deduplication</div>
+                <span class="prep-step-badge locked" id="stepBadge2">Locked</span>
+              </button>
+
+              <!-- Step 3 Stepper Button -->
+              <button class="prep-stepper-step locked" data-step="3" id="stepBtn3">
+                <div class="prep-step-top">
+                  <span class="prep-step-num">STEP 03</span>
+                  <div class="prep-step-status-icon" id="stepIcon3"><i data-lucide="lock" style="width: 15px; height: 15px;"></i></div>
+                </div>
+                <div class="prep-step-name">Missing Values</div>
+                <span class="prep-step-badge locked" id="stepBadge3">Locked</span>
+              </button>
+
+              <!-- Step 4 Stepper Button -->
+              <button class="prep-stepper-step locked" data-step="4" id="stepBtn4">
+                <div class="prep-step-top">
+                  <span class="prep-step-num">STEP 04</span>
+                  <div class="prep-step-status-icon" id="stepIcon4"><i data-lucide="lock" style="width: 15px; height: 15px;"></i></div>
+                </div>
+                <div class="prep-step-name">Outlier Treatment</div>
+                <span class="prep-step-badge locked" id="stepBadge4">Locked</span>
+              </button>
+
+              <!-- Step 5 Stepper Button -->
+              <button class="prep-stepper-step locked" data-step="5" id="stepBtn5">
+                <div class="prep-step-top">
+                  <span class="prep-step-num">STEP 05</span>
+                  <div class="prep-step-status-icon" id="stepIcon5"><i data-lucide="lock" style="width: 15px; height: 15px;"></i></div>
+                </div>
+                <div class="prep-step-name">Text Sanitization</div>
+                <span class="prep-step-badge locked" id="stepBadge5">Locked</span>
+              </button>
+
+              <!-- Step 6 Stepper Button -->
+              <button class="prep-stepper-step locked" data-step="6" id="stepBtn6">
+                <div class="prep-step-top">
+                  <span class="prep-step-num">STEP 06</span>
+                  <div class="prep-step-status-icon" id="stepIcon6"><i data-lucide="lock" style="width: 15px; height: 15px;"></i></div>
+                </div>
+                <div class="prep-step-name">Review & Export</div>
+                <span class="prep-step-badge locked" id="stepBadge6">Locked</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- =================================================================
+               STEP 1: QUALITY DIAGNOSTICS & ANOMALY SCAN
+               ================================================================= -->
+          <div class="prep-step-pane active" id="prepStep1">
+            <!-- Educational Guide Box -->
+            <div class="prep-guide-box">
+              <div class="prep-guide-header">
+                <div class="prep-guide-icon"><i data-lucide="microscope"></i></div>
+                <h3>Step 01: Comprehensive Data Quality & Health Diagnostics</h3>
+              </div>
+              <div class="prep-guide-body">
+                <div class="prep-guide-section what">
+                  <h5><i data-lucide="info"></i> What is this step?</h5>
+                  <p>An automated diagnostic assessment scanning your entire dataset across 4 critical quality pillars: missing entries, duplicate rows, extreme statistical outliers, and uninformative constant columns.</p>
+                </div>
+                <div class="prep-guide-section why">
+                  <h5><i data-lucide="sparkles"></i> Why is this critical?</h5>
+                  <p>Raw real-world datasets invariably contain defects. Inspecting your health score and identifying flaw distributions upfront prevents biased aggregations, mathematical runtime errors, and misleading visual insights.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Health Score Card -->
+            <div class="health-score-card">
+              <div class="health-gauge-wrap">
+                <div class="health-circle good" id="healthGaugeCircle">
+                  <div class="health-score-val" id="healthScoreValue">100%</div>
+                  <span>Cleanliness Score</span>
+                </div>
+              </div>
+
+              <div>
+                <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">
+                  Anomaly Diagnostic Assessment
+                </h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;" id="healthScoreNarrative">
+                  Dataset diagnostics evaluated across missing values, duplicate entries, extreme statistical outliers, and format consistency.
+                </p>
+
+                <div class="anomaly-summary-grid">
+                  <div class="anomaly-summary-item">
+                    <span>Missing Values</span>
+                    <h5 id="prepMissingCount" style="color: var(--accent-amber);">0</h5>
+                  </div>
+                  <div class="anomaly-summary-item">
+                    <span>Duplicate Rows</span>
+                    <h5 id="prepDuplicateCount" style="color: var(--accent-rose);">0</h5>
+                  </div>
+                  <div class="anomaly-summary-item">
+                    <span>Outlier Anomalies</span>
+                    <h5 id="prepOutlierCount" style="color: var(--accent-pink);">0</h5>
+                  </div>
+                  <div class="anomaly-summary-item">
+                    <span>Constant Columns</span>
+                    <h5 id="prepConstantColsCount">0</h5>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Attribute Quality Breakdown Table -->
+            <div class="glass-card">
+              <div class="card-title-bar">
+                <div>
+                  <h3><i data-lucide="table-properties"></i> Column-by-Column Diagnostic Matrix</h3>
+                  <p>Detailed health scan per attribute with detected anomaly tags.</p>
+                </div>
+              </div>
+
+              <div class="table-wrapper" style="max-height: 320px;">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Attribute Name</th>
+                      <th>Inferred Type</th>
+                      <th>Missing Count</th>
+                      <th>Missing Ratio</th>
+                      <th>Unique Values</th>
+                      <th>Diagnostic Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="diagAttributesTableBody">
+                    <!-- Populated dynamically by preprocessing.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Step 1 Action Bar -->
+            <div class="prep-action-bar">
+              <div class="prep-action-left">
+                <span style="font-size: 0.85rem; color: var(--text-muted);">
+                  <i data-lucide="check-circle" style="color: var(--accent-emerald); width: 16px; height: 16px; display: inline-block; vertical-align: middle;"></i> Diagnostics complete. Ready to begin cleansing pipeline.
+                </span>
+              </div>
+              <div class="prep-action-right">
+                <button class="btn btn-primary btn-lg" id="btnStep1Proceed">
+                  Begin Preprocessing Walkthrough <i data-lucide="arrow-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- =================================================================
+               STEP 2: DUPLICATE RECORDS DEDUPLICATION
+               ================================================================= -->
+          <div class="prep-step-pane" id="prepStep2">
+            <!-- Educational Guide Box -->
+            <div class="prep-guide-box">
+              <div class="prep-guide-header">
+                <div class="prep-guide-icon"><i data-lucide="copy"></i></div>
+                <h3>Step 02: Duplicate Records Deduplication</h3>
+              </div>
+              <div class="prep-guide-body">
+                <div class="prep-guide-section what">
+                  <h5><i data-lucide="info"></i> What can you do in this step?</h5>
+                  <p>Identify identical redundant records across your dataset. You can keep the first occurrence, keep the latest occurrence, or choose to retain all duplicates untouched.</p>
+                </div>
+                <div class="prep-guide-section why">
+                  <h5><i data-lucide="sparkles"></i> Why should you do this?</h5>
+                  <p>Duplicate records artificially inflate metric counts (e.g. over-counting sales or patients), distort variances, bias correlation metrics, and cause severe overfitting in analytical models.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Impact Alert -->
+            <div class="prep-impact-alert warning" id="step2ImpactAlert">
+              <div class="prep-impact-content">
+                <i data-lucide="alert-circle"></i>
+                <span id="step2ImpactText">Scanning for duplicate records...</span>
+              </div>
+              <span class="prep-step-badge pending" id="step2ImpactBadge">Scanned</span>
+            </div>
+
+            <!-- Configuration Card -->
+            <div class="glass-card">
+              <div class="card-title-bar">
+                <div>
+                  <h3><i data-lucide="sliders"></i> Deduplication Configuration</h3>
+                  <p>Select how duplicate records should be treated.</p>
+                </div>
+              </div>
+
+              <div class="form-group" style="max-width: 550px;">
+                <label for="duplicateStrategySelect">Deduplication Retention Strategy</label>
+                <select class="select-control" id="duplicateStrategySelect">
+                  <option value="first" selected>Remove Duplicates (Keep First Occurrence - Recommended)</option>
+                  <option value="last">Remove Duplicates (Keep Last Occurrence)</option>
+                  <option value="none">Retain Duplicates (Do not remove)</option>
+                </select>
+              </div>
+
+              <!-- Dynamic Strategy Impact Card (Live updates upon select) -->
+              <div class="strategy-impact-card" id="step2StrategyImpact">
+                <!-- Dynamically updated by preprocessing.js -->
+              </div>
+
+              <!-- Comparative Guide Drawer Toggle -->
+              <button type="button" class="method-comp-toggle" id="btnToggleStep2Comp">
+                <i data-lucide="book-open"></i> Compare All 3 Deduplication Strategies & Dataset Impacts
+              </button>
+
+              <div class="method-comp-drawer" id="step2CompDrawer">
+                <h5 style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">
+                  All Available Deduplication Methods:
+                </h5>
+                <div class="method-comp-grid">
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>1. Keep First Occurrence</strong>
+                      <span class="type-badge numeric">Recommended</span>
+                    </div>
+                    <p>Scans chronologically from row 0 downwards. Keeps the original encountered instance of identical rows and discards later duplicates.</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Decreases $N$ by duplicate count. Eliminates artificial frequency bias while preserving original chronological baseline.
+                    </div>
+                  </div>
+
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>2. Keep Last Occurrence</strong>
+                      <span class="type-badge boolean">Alternative</span>
+                    </div>
+                    <p>Scans backwards from the bottom of the dataset. Keeps the most recently inserted revision of duplicate rows and discards earlier ones.</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Decreases $N$ by duplicate count. Preserves newest state in CRM or event-log updates; may invert chronological sequence.
+                    </div>
+                  </div>
+
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>3. Retain All Duplicates</strong>
+                      <span class="type-badge categorical">Non-Destructive</span>
+                    </div>
+                    <p>Leaves all identical rows in the dataset completely unmodified.</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Zero reduction in $N$. Keeps metric counts inflated if duplicate entries were unintentional data collection errors.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Duplicate Sample Rows Preview Box -->
+              <div id="step2PreviewWrap" style="display: none; margin-top: 20px;">
+                <h5 style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">
+                  Duplicate Records Sample Preview:
+                </h5>
+                <div class="table-wrapper" style="max-height: 200px;">
+                  <table class="data-table" id="step2DuplicatesTable">
+                    <thead><tr id="step2DupHead"></tr></thead>
+                    <tbody id="step2DupBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2 Action Bar -->
+            <div class="prep-action-bar">
+              <div class="prep-action-left">
+                <button class="btn btn-secondary" id="btnStep2Back">
+                  <i data-lucide="arrow-left"></i> Back to Diagnostics
+                </button>
+              </div>
+              <div class="prep-action-right">
+                <button class="btn btn-skip" id="btnStep2Skip">
+                  <i data-lucide="skip-forward"></i> Skip Deduplication
+                </button>
+                <button class="btn btn-primary" id="btnStep2Apply">
+                  <i data-lucide="check"></i> Apply Deduplication & Continue <i data-lucide="arrow-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- =================================================================
+               STEP 3: MISSING VALUE IMPUTATION
+               ================================================================= -->
+          <div class="prep-step-pane" id="prepStep3">
+            <!-- Educational Guide Box -->
+            <div class="prep-guide-box">
+              <div class="prep-guide-header">
+                <div class="prep-guide-icon"><i data-lucide="help-circle"></i></div>
+                <h3>Step 03: Missing Value Imputation & Handling</h3>
+              </div>
+              <div class="prep-guide-body">
+                <div class="prep-guide-section what">
+                  <h5><i data-lucide="info"></i> What can you do in this step?</h5>
+                  <p>Handle null, empty, or unrecorded cells using Smart Auto-Imputation (Median for numerical, Mode for categorical), statistical Mean, Median, Mode, constant values ("Unknown"/0), or row elimination.</p>
+                </div>
+                <div class="prep-guide-section why">
+                  <h5><i data-lucide="sparkles"></i> Why should you do this?</h5>
+                  <p>Missing cells cause formulas to return NaN, exclude data points from graphs, and introduce selection bias. Imputation preserves sample volume while safeguarding the underlying probability distribution.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Impact Alert -->
+            <div class="prep-impact-alert warning" id="step3ImpactAlert">
+              <div class="prep-impact-content">
+                <i data-lucide="alert-circle"></i>
+                <span id="step3ImpactText">Scanning for missing values...</span>
+              </div>
+              <span class="prep-step-badge pending" id="step3ImpactBadge">Scanned</span>
+            </div>
+
+            <!-- Configuration Card -->
+            <div class="glass-card">
+              <div class="card-title-bar">
+                <div>
+                  <h3><i data-lucide="sliders"></i> Missing Values Strategy</h3>
+                  <p>Select your preferred statistical imputation technique.</p>
+                </div>
+              </div>
+
+              <div class="form-group" style="max-width: 550px;">
+                <label for="missingStrategySelect">Imputation Algorithm</label>
+                <select class="select-control" id="missingStrategySelect">
+                  <option value="smart" selected>Smart Auto-Impute (Median for Numeric, Mode for Categorical - Recommended)</option>
+                  <option value="median">Median Imputation (Robust against skewness and outliers)</option>
+                  <option value="mean">Mean Imputation (Best for symmetrical Gaussian distributions)</option>
+                  <option value="mode">Mode / Most Frequent Value (Best for categorical dimensions)</option>
+                  <option value="constant">Constant Value ("Unknown" for text / 0 for numbers)</option>
+                  <option value="drop">Drop Incomplete Rows (Only recommended if sample size is large)</option>
+                </select>
+              </div>
+
+              <!-- Dynamic Strategy Impact Card (Live updates upon select) -->
+              <div class="strategy-impact-card" id="step3StrategyImpact">
+                <!-- Dynamically updated by preprocessing.js -->
+              </div>
+
+              <!-- Comparative Guide Drawer Toggle -->
+              <button type="button" class="method-comp-toggle" id="btnToggleStep3Comp">
+                <i data-lucide="book-open"></i> Compare All 6 Imputation Methods & Dataset Impacts
+              </button>
+
+              <div class="method-comp-drawer" id="step3CompDrawer">
+                <h5 style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">
+                  All Available Missing Value Imputation Methods:
+                </h5>
+                <div class="method-comp-grid">
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>1. Smart Auto-Impute</strong>
+                      <span class="type-badge numeric">Recommended</span>
+                    </div>
+                    <p>Applies Median to numeric metrics and Mode (most frequent category) to text attributes automatically.</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Preserves 100% of rows ($N$ unchanged). Neutralizes skewness in numeric columns while classifying text nulls into the dominant category.
+                    </div>
+                  </div>
+
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>2. Median Imputation</strong>
+                      <span class="type-badge boolean">Robust</span>
+                    </div>
+                    <p>Replaces missing numeric values with the 50th percentile. Highly resistant to extreme outlier spikes.</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Keeps distribution center stable even on skewed data. Slightly shrinks column variance without distorting median.
+                    </div>
+                  </div>
+
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>3. Mean Imputation</strong>
+                      <span class="type-badge datetime">Parametric</span>
+                    </div>
+                    <p>Fills empty cells with the arithmetic average ($\mu$). Best suited for symmetrical bell-curve distributions.</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Preserves the sample mean exactly; depresses standard deviation ($\sigma$); can pull distribution if high outliers exist.
+                    </div>
+                  </div>
+
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>4. Mode (Most Frequent)</strong>
+                      <span class="type-badge categorical">Categorical</span>
+                    </div>
+                    <p>Replaces nulls with the category holding highest frequency count in that attribute.</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Preserves sample volume. Inflates class dominance of top category; may underrepresent minority groups.
+                    </div>
+                  </div>
+
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>5. Constant ("Unknown"/0)</strong>
+                      <span class="type-badge boolean">Explicit</span>
+                    </div>
+                    <p>Fills text nulls with "Unknown" and numeric nulls with 0. Used when missingness is informative.</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Adds an explicit "Unknown" slice in charts; for numbers, adding zeroes can drag averages down significantly.
+                    </div>
+                  </div>
+
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>6. Drop Incomplete Rows</strong>
+                      <span class="type-badge datetime" style="color:var(--accent-rose);">Aggressive</span>
+                    </div>
+                    <p>Deletes any entire record containing one or more null values (Listwise Deletion).</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Decreases total row count $N$. Guaranteed 100% authentic observations, but risks losing statistical power and introducing selection bias.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Columns With Missing Data Card Grid -->
+              <h5 style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-top: 20px; margin-bottom: 10px;">
+                Affected Attributes Breakdown:
+              </h5>
+              <div id="step3MissingBreakdown" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Step 3 Action Bar -->
+            <div class="prep-action-bar">
+              <div class="prep-action-left">
+                <button class="btn btn-secondary" id="btnStep3Back">
+                  <i data-lucide="arrow-left"></i> Back to Deduplication
+                </button>
+              </div>
+              <div class="prep-action-right">
+                <button class="btn btn-skip" id="btnStep3Skip">
+                  <i data-lucide="skip-forward"></i> Skip Imputation
+                </button>
+                <button class="btn btn-primary" id="btnStep3Apply">
+                  <i data-lucide="check"></i> Apply Imputation & Continue <i data-lucide="arrow-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- =================================================================
+               STEP 4: OUTLIERS & STATISTICAL ANOMALIES
+               ================================================================= -->
+          <div class="prep-step-pane" id="prepStep4">
+            <!-- Educational Guide Box -->
+            <div class="prep-guide-box">
+              <div class="prep-guide-header">
+                <div class="prep-guide-icon"><i data-lucide="alert-triangle"></i></div>
+                <h3>Step 04: Outliers & Statistical Anomalies Treatment</h3>
+              </div>
+              <div class="prep-guide-body">
+                <div class="prep-guide-section what">
+                  <h5><i data-lucide="info"></i> What can you do in this step?</h5>
+                  <p>Detect extreme data spikes using IQR (Interquartile Range) and Z-Scores. Treat them via Winsorization/Capping (5th & 95th Percentile), row filtering, or choose to retain them untouched.</p>
+                </div>
+                <div class="prep-guide-section why">
+                  <h5><i data-lucide="sparkles"></i> Why should you do this?</h5>
+                  <p>Extreme anomalous values drastically pull arithmetic averages, wildly inflate variance metrics, and distort regression curves. Winsorization neutralizes extremes without deleting valuable records.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Impact Alert -->
+            <div class="prep-impact-alert warning" id="step4ImpactAlert">
+              <div class="prep-impact-content">
+                <i data-lucide="alert-circle"></i>
+                <span id="step4ImpactText">Scanning for statistical outliers...</span>
+              </div>
+              <span class="prep-step-badge pending" id="step4ImpactBadge">Scanned</span>
+            </div>
+
+            <!-- Configuration Card -->
+            <div class="glass-card">
+              <div class="card-title-bar">
+                <div>
+                  <h3><i data-lucide="sliders"></i> Outlier Management Method</h3>
+                  <p>Select how extreme numerical points should be regulated.</p>
+                </div>
+              </div>
+
+              <div class="form-group" style="max-width: 550px;">
+                <label for="outlierStrategySelect">Outlier Treatment Protocol</label>
+                <select class="select-control" id="outlierStrategySelect">
+                  <option value="winsorize" selected>Winsorization / Percentile Capping (5th & 95th Percentile - Recommended)</option>
+                  <option value="remove_iqr">Remove Outlier Rows (1.5x IQR Boundary Rule)</option>
+                  <option value="remove_zscore">Remove Outlier Rows (Z-Score > 3.0)</option>
+                  <option value="keep">Keep Outliers Untouched</option>
+                </select>
+              </div>
+
+              <!-- Dynamic Strategy Impact Card (Live updates upon select) -->
+              <div class="strategy-impact-card" id="step4StrategyImpact">
+                <!-- Dynamically updated by preprocessing.js -->
+              </div>
+
+              <!-- Comparative Guide Drawer Toggle -->
+              <button type="button" class="method-comp-toggle" id="btnToggleStep4Comp">
+                <i data-lucide="book-open"></i> Compare All 4 Outlier Protocols & Dataset Impacts
+              </button>
+
+              <div class="method-comp-drawer" id="step4CompDrawer">
+                <h5 style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">
+                  All Available Outlier Treatment Methods:
+                </h5>
+                <div class="method-comp-grid">
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>1. Winsorization / Capping</strong>
+                      <span class="type-badge numeric">Recommended</span>
+                    </div>
+                    <p>Clamps extreme low values to 5th percentile ($P_{05}$) and high spikes to 95th percentile ($P_{95}$).</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Preserves 100% of rows ($N$ untouched). Neutralizes distortive spikes while keeping all genuine records intact.
+                    </div>
+                  </div>
+
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>2. 1.5x IQR Boundary Rule</strong>
+                      <span class="type-badge datetime">Robust Filter</span>
+                    </div>
+                    <p>Deletes any row falling outside $[Q_1 - 1.5 \times IQR, Q_3 + 1.5 \times IQR]$. Non-parametric standard.</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Reduces row count $N$. Restores symmetry to skewed distributions; risks dropping valid high-value customers.
+                    </div>
+                  </div>
+
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>3. Z-Score > 3.0 Filter</strong>
+                      <span class="type-badge boolean">Parametric</span>
+                    </div>
+                    <p>Deletes rows with $|Z| > 3.0$ (more than 3 standard deviations away from the mean $\mu$).</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Removes extreme tail anomalies (top 0.3%). Best on normal distributions; can be distorted if initial outliers are massive.
+                    </div>
+                  </div>
+
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>4. Keep Outliers Untouched</strong>
+                      <span class="type-badge categorical">Preservation</span>
+                    </div>
+                    <p>Leaves all numerical values raw and unmodified.</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      0 rows modified. Averages and chart axis scales remain stretched by extreme spikes. Ideal for fraud/anomaly research.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Outlier Column Breakdown -->
+              <h5 style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-top: 20px; margin-bottom: 10px;">
+                Numerical Attributes Outlier Status:
+              </h5>
+              <div id="step4OutlierBreakdown" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px;">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Step 4 Action Bar -->
+            <div class="prep-action-bar">
+              <div class="prep-action-left">
+                <button class="btn btn-secondary" id="btnStep4Back">
+                  <i data-lucide="arrow-left"></i> Back to Missing Values
+                </button>
+              </div>
+              <div class="prep-action-right">
+                <button class="btn btn-skip" id="btnStep4Skip">
+                  <i data-lucide="skip-forward"></i> Skip Outlier Treatment
+                </button>
+                <button class="btn btn-primary" id="btnStep4Apply">
+                  <i data-lucide="check"></i> Apply Outlier Treatment & Continue <i data-lucide="arrow-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- =================================================================
+               STEP 5: TEXT SANITIZATION & TYPE NORMALIZATION
+               ================================================================= -->
+          <div class="prep-step-pane" id="prepStep5">
+            <!-- Educational Guide Box -->
+            <div class="prep-guide-box">
+              <div class="prep-guide-header">
+                <div class="prep-guide-icon"><i data-lucide="type"></i></div>
+                <h3>Step 05: Text Sanitization & String Standardization</h3>
+              </div>
+              <div class="prep-guide-body">
+                <div class="prep-guide-section what">
+                  <h5><i data-lucide="info"></i> What can you do in this step?</h5>
+                  <p>Strip invisible leading/trailing whitespace, harmonize irregular capitalization across text columns, and normalize boolean flag indicators (yes/no/1/0 -> True/False).</p>
+                </div>
+                <div class="prep-guide-section why">
+                  <h5><i data-lucide="sparkles"></i> Why should you do this?</h5>
+                  <p>Without normalization, groupings treat "USA", "usa", and " USA " as three disjoint categories. Standardizing text guarantees clean grouping, accurate counts, and flawless category legends.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Impact Alert -->
+            <div class="prep-impact-alert info" id="step5ImpactAlert">
+              <div class="prep-impact-content">
+                <i data-lucide="info"></i>
+                <span id="step5ImpactText">Scanning categorical and boolean fields...</span>
+              </div>
+              <span class="prep-step-badge pending" id="step5ImpactBadge">Scanned</span>
+            </div>
+
+            <!-- Configuration Card -->
+            <div class="glass-card">
+              <div class="card-title-bar">
+                <div>
+                  <h3><i data-lucide="sliders"></i> String Standardization Settings</h3>
+                  <p>Configure casing and format normalization.</p>
+                </div>
+              </div>
+
+              <div class="form-group" style="max-width: 500px;">
+                <label for="textSanitizeSelect">Categorical String Normalization</label>
+                <select class="select-control" id="textSanitizeSelect">
+                  <option value="trim_case" selected>Trim Whitespaces & Enforce Title Case (Recommended)</option>
+                  <option value="trim">Trim Whitespaces Only</option>
+                  <option value="lower">Trim Whitespaces & Lowercase</option>
+                  <option value="none">No Text Modification</option>
+                </select>
+              </div>
+
+              <!-- Dynamic Strategy Impact Card (Live updates upon select) -->
+              <div class="strategy-impact-card" id="step5StrategyImpact">
+                <!-- Dynamically updated by preprocessing.js -->
+              </div>
+
+              <!-- Comparative Guide Drawer Toggle -->
+              <button type="button" class="method-comp-toggle" id="btnToggleStep5Comp">
+                <i data-lucide="book-open"></i> Compare All 4 String Standardization Methods & Impacts
+              </button>
+
+              <div class="method-comp-drawer" id="step5CompDrawer">
+                <h5 style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">
+                  All Available Text Normalization Methods:
+                </h5>
+                <div class="method-comp-grid">
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>1. Trim & Title Case</strong>
+                      <span class="type-badge numeric">Recommended</span>
+                    </div>
+                    <p>Strips whitespace and capitalizes the first character of each word (" new york " $\rightarrow$ "New York").</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Merges fragmented category duplicates into clean unified labels. Optimal for proper nouns, cities, and departments.
+                    </div>
+                  </div>
+
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>2. Trim Whitespace Only</strong>
+                      <span class="type-badge boolean">Preserves Case</span>
+                    </div>
+                    <p>Removes padding spaces while leaving original character capitalization untouched.</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Fixes spacing defects while preserving mixed-case codes (e.g. "iPhone", "MacBook").
+                    </div>
+                  </div>
+
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>3. Trim & Lowercase</strong>
+                      <span class="type-badge datetime">NLP / Web</span>
+                    </div>
+                    <p>Strips spaces and converts all letters to lowercase ("NEW YORK" $\rightarrow$ "new york").</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Aggressive normalization. Ideal for email addresses, search tokens, and NLP pipelines.
+                    </div>
+                  </div>
+
+                  <div class="method-card">
+                    <div class="method-card-top">
+                      <strong>4. No Text Modification</strong>
+                      <span class="type-badge categorical">Raw Input</span>
+                    </div>
+                    <p>Leaves string values exactly as formatted in the raw uploaded file.</p>
+                    <div class="method-card-impact">
+                      <strong>Dataset Impact:</strong>
+                      Risk of splitting a single real-world category into multiple chart items due to differing casing.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="margin-top: 18px;">
+                <label class="switch-label" style="max-width: 500px; padding: 12px 14px; background: var(--bg-input); border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                  <span>Normalize Booleans & Binary Flags (yes/no, 1/0 → True/False)</span>
+                  <input type="checkbox" id="chkSanitizeBooleans" checked>
+                </label>
+              </div>
+
+              <!-- Categorical Attributes List -->
+              <h5 style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); margin-top: 20px; margin-bottom: 10px;">
+                Target Categorical Dimensions:
+              </h5>
+              <div id="step5AttributesList" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Step 5 Action Bar -->
+            <div class="prep-action-bar">
+              <div class="prep-action-left">
+                <button class="btn btn-secondary" id="btnStep5Back">
+                  <i data-lucide="arrow-left"></i> Back to Outliers
+                </button>
+              </div>
+              <div class="prep-action-right">
+                <button class="btn btn-skip" id="btnStep5Skip">
+                  <i data-lucide="skip-forward"></i> Skip Sanitization
+                </button>
+                <button class="btn btn-primary" id="btnStep5Apply">
+                  <i data-lucide="wand-2"></i> Apply Sanitization & Finalize Pipeline <i data-lucide="arrow-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- =================================================================
+               STEP 6: REVIEW, AUDIT LOG & CLEAN DATASET EXPORT
+               ================================================================= -->
+          <div class="prep-step-pane" id="prepStep6">
+            <!-- Educational Guide Box -->
+            <div class="prep-guide-box" style="border-left-color: var(--accent-emerald);">
+              <div class="prep-guide-header">
+                <div class="prep-guide-icon" style="background: rgba(16, 185, 129, 0.2); color: var(--accent-emerald);"><i data-lucide="check-circle-2"></i></div>
+                <h3>Step 06: Preprocessing Pipeline Verification & Clean Export</h3>
+              </div>
+              <div class="prep-guide-body">
+                <div class="prep-guide-section what">
+                  <h5><i data-lucide="info"></i> What was accomplished?</h5>
+                  <p>Your chosen preprocessing pipeline has executed. All decisions, whether applied or intentionally skipped, are verified, logged, and ready for visual analysis.</p>
+                </div>
+                <div class="prep-guide-section why">
+                  <h5><i data-lucide="sparkles"></i> Why is this important?</h5>
+                  <p>Verifying the audit trail provides full reproducibility and analytical transparency. You can export the pristine sanitized dataset as CSV or JSON for external workflows.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pipeline Decisions Matrix Grid -->
+            <div class="glass-card">
+              <div class="card-title-bar">
+                <div>
+                  <h3><i data-lucide="check-square"></i> Preprocessing Workflow Decision Summary</h3>
+                  <p>Overview of each step's configured outcome and transformation status.</p>
+                </div>
+                <button class="btn btn-sm btn-secondary" id="btnRerunCleaning">
+                  <i data-lucide="refresh-cw"></i> Re-execute Pipeline
+                </button>
+              </div>
+
+              <div class="prep-decision-grid" id="prepDecisionsGrid">
+                <!-- Populated dynamically with 5 step cards -->
+              </div>
+            </div>
+
+            <!-- Audit Log Terminal -->
+            <div class="glass-card">
+              <div class="card-title-bar">
+                <div>
+                  <h3><i data-lucide="terminal"></i> Pipeline Execution Audit Log</h3>
+                  <p>Chronological trace of automated transformations and anomalies resolved.</p>
+                </div>
+              </div>
+
+              <div class="cleaning-log-box" id="cleaningLogBox">
+                <div class="log-entry info">
+                  <i data-lucide="info" style="width: 14px; height: 14px;"></i>
+                  Ready to execute pipeline.
+                </div>
+              </div>
+            </div>
+
+            <!-- Cleaned Dataset Preview & Export Area -->
+            <div class="glass-card">
+              <div class="card-title-bar">
+                <div>
+                  <h3><i data-lucide="file-check"></i> Pristine Cleaned Dataset Preview & Export</h3>
+                  <p>Explore the sanitized dataset after anomaly resolution.</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                  <button class="btn btn-sm btn-secondary" id="btnDownloadCleanJSON">
+                    <i data-lucide="code"></i> Export JSON
+                  </button>
+                  <button class="btn btn-sm btn-primary" id="btnDownloadCleanCSV">
+                    <i data-lucide="download"></i> Download Clean CSV
+                  </button>
+                </div>
+              </div>
+
+              <div class="table-wrapper">
+                <table class="data-table" id="cleanDataTable">
+                  <thead>
+                    <tr id="cleanTableHead"></tr>
+                  </thead>
+                  <tbody id="cleanTableBody"></tbody>
+                </table>
+              </div>
+
+              <div class="table-footer">
+                <span id="cleanTablePaginationInfo">Showing 1-10 of cleaned rows</span>
+                <div class="pagination-controls">
+                  <button class="btn btn-sm btn-secondary" id="cleanTablePrevBtn"><i data-lucide="chevron-left"></i> Previous</button>
+                  <span id="cleanTableCurrentPage" style="font-weight: 700; padding: 0 8px;">Page 1</span>
+                  <button class="btn btn-sm btn-secondary" id="cleanTableNextBtn">Next <i data-lucide="chevron-right"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 6 Action Bar -->
+            <div class="prep-action-bar">
+              <div class="prep-action-left">
+                <button class="btn btn-secondary" id="btnStep6Back">
+                  <i data-lucide="arrow-left"></i> Revisit Previous Steps
+                </button>
+              </div>
+              <div class="prep-action-right">
+                <button class="btn btn-primary btn-lg" id="btnStep6ContinueAnalysis">
+                  Proceed to Visual Analysis <i data-lucide="arrow-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- =================================================================
+             TAB 4: ATTRIBUTE-DRIVEN ANALYSIS & VISUALIZATION
+             ================================================================= -->
+        <section class="tab-pane" id="analysisTab">
+
+          <div class="section-header">
+            <div class="section-title-wrap">
+              <h2><i data-lucide="pie-chart"></i> Visual Exploratory Data Analysis</h2>
+              <p>Explore attribute distributions, correlation heatmaps, bivariate relationships, and descriptive
+                statistical metrics.</p>
+            </div>
+            <button class="btn btn-primary" id="btnProceedToReport">
+              Generate AI Report <i data-lucide="arrow-right"></i>
+            </button>
+          </div>
+
+          <!-- Analysis Dynamic Controls Bar -->
+          <div class="analysis-control-bar">
+            <div class="analysis-selectors">
+
+              <div class="selector-unit">
+                <label for="selectTargetAttr">Target / Primary Attribute (Y)</label>
+                <select class="select-control" id="selectTargetAttr" style="min-width: 180px;"></select>
+              </div>
+
+              <div class="selector-unit">
+                <label for="selectSecondaryAttr">Comparison Feature (X)</label>
+                <select class="select-control" id="selectSecondaryAttr" style="min-width: 180px;"></select>
+              </div>
+
+              <div class="selector-unit">
+                <label for="selectChartTheme">Palette Theme</label>
+                <select class="select-control" id="selectChartTheme">
+                  <option value="neon" selected>Vibrant Neon</option>
+                  <option value="emerald">Emerald Sea</option>
+                  <option value="sunset">Sunset Amber</option>
+                  <option value="corporate">Corporate Slate</option>
+                </select>
+              </div>
+
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+              <button class="btn btn-secondary" id="btnRefreshAnalysis">
+                <i data-lucide="rotate-ccw"></i> Recalculate
+              </button>
+            </div>
+          </div>
+
+          <!-- Charts Grid -->
+          <div class="charts-grid-main">
+
+            <!-- Chart 1: Target Attribute Distribution -->
+            <div class="glass-card chart-card-col-6">
+              <div class="card-title-bar">
+                <div>
+                  <h3 id="chart1Title"><i data-lucide="bar-chart-2"></i> Distribution of Target Attribute</h3>
+                  <p id="chart1Subtitle">Histogram and frequency spectrum</p>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn-icon" id="btnDownloadChart1" title="Download Chart Image"><i data-lucide="camera"></i></button>
+                </div>
+              </div>
+              <div class="chart-container-box">
+                <canvas id="chartDistribution"></canvas>
+              </div>
+              <!-- Chart 1 Meta Explainer & Actionable Takeaways -->
+              <div class="chart-meta-box" id="chart1MetaBox">
+                <!-- Dynamically populated by analysis.js -->
+              </div>
+            </div>
+
+            <!-- Chart 2: Bivariate Relationship / Category Breakdown -->
+            <div class="glass-card chart-card-col-6">
+              <div class="card-title-bar">
+                <div>
+                  <h3 id="chart2Title"><i data-lucide="git-commit"></i> Target vs Comparison Feature</h3>
+                  <p id="chart2Subtitle">Scatter plot with trendline or category breakdown</p>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn-icon" id="btnDownloadChart2" title="Download Chart Image"><i data-lucide="camera"></i></button>
+                </div>
+              </div>
+              <div class="chart-container-box">
+                <canvas id="chartRelationship"></canvas>
+              </div>
+              <!-- Chart 2 Meta Explainer & Actionable Takeaways -->
+              <div class="chart-meta-box" id="chart2MetaBox">
+                <!-- Dynamically populated by analysis.js -->
+              </div>
+            </div>
+
+            <!-- Chart 3: Categorical Composition / Donut -->
+            <div class="glass-card chart-card-col-4">
+              <div class="card-title-bar">
+                <div>
+                  <h3 id="chart3Title"><i data-lucide="pie-chart"></i> Segment Breakdown</h3>
+                  <p id="chart3Subtitle">Proportional distribution</p>
+                </div>
+              </div>
+              <div class="chart-container-box">
+                <canvas id="chartComposition"></canvas>
+              </div>
+              <!-- Chart 3 Meta Explainer & Actionable Takeaways -->
+              <div class="chart-meta-box" id="chart3MetaBox">
+                <!-- Dynamically populated by analysis.js -->
+              </div>
+            </div>
+
+            <!-- Chart 4: Correlation Matrix Heatmap -->
+            <div class="glass-card chart-card-col-8">
+              <div class="card-title-bar">
+                <div>
+                  <h3><i data-lucide="grid"></i> Pearson Correlation Matrix</h3>
+                  <p>Linear association coefficients across all numeric attributes (-1.00 to +1.00)</p>
+                </div>
+              </div>
+              <div id="correlationMatrixContainer" class="correlation-matrix-grid">
+                <!-- Populated dynamically -->
+              </div>
+              <!-- Chart 4 Meta Explainer & Actionable Takeaways -->
+              <div class="chart-meta-box" id="chart4MetaBox">
+                <!-- Dynamically populated by analysis.js -->
+              </div>
+            </div>
+
+          </div>
+
+          <!-- =================================================================
+               CUSTOM INTERACTIVE PLOT STUDIO & CHART BUILDER
+               ================================================================= -->
+          <div class="custom-studio-card" id="customPlotStudioCard">
+            <div class="custom-studio-header">
+              <div>
+                <h3><i data-lucide="sparkles" style="color: var(--secondary);"></i> Custom Interactive Plot Studio & Chart Generator</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+                  Design, configure, and render your own tailored visualizations. Generate customized statistical breakdowns, chart summaries, and actionable implementation roadmaps.
+                </p>
+              </div>
+            </div>
+
+            <div class="custom-studio-grid">
+              <!-- 1. Chart Type -->
+              <div class="form-group">
+                <label for="customChartTypeSelect">Chart Type</label>
+                <select class="select-control" id="customChartTypeSelect">
+                  <option value="bar" selected>📊 Vertical Bar Chart (Comparison)</option>
+                  <option value="horizontalBar">📊 Horizontal Bar Chart (Ranking)</option>
+                  <option value="line">📈 Line / Trend Curve (Progression)</option>
+                  <option value="area">📉 Area Chart (Cumulative Volume)</option>
+                  <option value="doughnut">🍩 Doughnut / Pie (Proportions)</option>
+                  <option value="scatter">🔵 Scatter Plot + Regression (Correlation)</option>
+                  <option value="radar">🕸️ Radar / Spider Profile (Fingerprint)</option>
+                  <option value="polarArea">🎯 Polar Area Chart (Radial Distribution)</option>
+                </select>
+              </div>
+
+              <!-- 2. X-Axis Attribute -->
+              <div class="form-group">
+                <label for="customXAttrSelect">X-Axis (Dimension / Category)</label>
+                <select class="select-control" id="customXAttrSelect"></select>
+              </div>
+
+              <!-- 3. Y-Axis Attribute -->
+              <div class="form-group">
+                <label for="customYAttrSelect">Y-Axis (Metric / Measure)</label>
+                <select class="select-control" id="customYAttrSelect"></select>
+              </div>
+
+              <!-- 4. Aggregation -->
+              <div class="form-group">
+                <label for="customAggSelect">Aggregation Operation</label>
+                <select class="select-control" id="customAggSelect">
+                  <option value="mean" selected>Average / Mean (μ)</option>
+                  <option value="sum">Sum (Total Aggregate Σ)</option>
+                  <option value="median">Median (50th Percentile)</option>
+                  <option value="count">Count (Record Frequency N)</option>
+                  <option value="max">Maximum Value</option>
+                  <option value="min">Minimum Value</option>
+                  <option value="none">Raw Individual Rows (Scatter Only)</option>
+                </select>
+              </div>
+
+              <!-- 5. Color / Palette Theme -->
+              <div class="form-group">
+                <label for="customPaletteSelect">Palette Theme</label>
+                <select class="select-control" id="customPaletteSelect">
+                  <option value="neon" selected>Vibrant Neon</option>
+                  <option value="emerald">Emerald Sea</option>
+                  <option value="sunset">Sunset Amber</option>
+                  <option value="corporate">Corporate Slate</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+              <button class="btn btn-primary btn-lg" id="btnGenerateCustomPlot">
+                <i data-lucide="play"></i> Generate & Render Custom Plot <i data-lucide="arrow-right"></i>
+              </button>
+            </div>
+
+            <!-- Custom Rendered Output Container -->
+            <div class="custom-chart-output-box" id="customChartOutputBox">
+              <div class="card-title-bar">
+                <div>
+                  <h3 id="customChartTitle"><i data-lucide="line-chart"></i> Custom Generated Visualization</h3>
+                  <p id="customChartSubtitle">Interactive custom plot generated from user-defined dimensions.</p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn btn-sm btn-secondary" id="btnDownloadCustomChart">
+                    <i data-lucide="camera"></i> Export Plot Image
+                  </button>
+                </div>
+              </div>
+
+              <div class="chart-container-box tall">
+                <canvas id="chartCustomStudio"></canvas>
+              </div>
+
+              <!-- Custom Plot Meta Explainer & Actionable Takeaways -->
+              <div class="chart-meta-box" id="customChartMetaBox">
+                <!-- Dynamically populated by analysis.js -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Comprehensive Statistical Summary Table -->
+          <div class="glass-card">
+            <div class="card-title-bar">
+              <div>
+                <h3><i data-lucide="calculator"></i> Descriptive Statistical Metrics Table</h3>
+                <p>Parametric & non-parametric measurements (Central tendency, Dispersion, Skewness, Kurtosis, and
+                  Percentiles).</p>
+              </div>
+            </div>
+
+            <div class="stats-summary-table-wrap">
+              <table class="data-table" id="statsSummaryTable">
+                <thead>
+                  <tr>
+                    <th>Attribute</th>
+                    <th>Type</th>
+                    <th>Count</th>
+                    <th>Mean</th>
+                    <th>Median</th>
+                    <th>Std Dev</th>
+                    <th>Min</th>
+                    <th>25th (Q1)</th>
+                    <th>75th (Q3)</th>
+                    <th>Max</th>
+                    <th>IQR</th>
+                    <th>Skewness</th>
+                    <th>Kurtosis</th>
+                  </tr>
+                </thead>
+                <tbody id="statsSummaryTableBody">
+                  <!-- Populated by analysis.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- =================================================================
+             TAB 5: AUTOMATED AI INTELLIGENCE REPORT
+             ================================================================= -->
+        <section class="tab-pane" id="reportTab">
+
+          <div class="section-header">
+            <div class="section-title-wrap">
+              <h2><i data-lucide="file-text"></i> Automated Intelligence Report</h2>
+              <p>Comprehensive algorithmic report synthesized from your data profiling, cleaning, and visual analysis.
+              </p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button class="btn btn-secondary" id="btnDownloadReportJSON">
+                <i data-lucide="code"></i> Export Analysis JSON
+              </button>
+              <button class="btn btn-secondary" id="btnDownloadReportHTML">
+                <i data-lucide="file-code"></i> Download HTML Report
+              </button>
+              <button class="btn btn-primary" id="btnPrintReport">
+                <i data-lucide="printer"></i> Print / Save as PDF
+              </button>
+            </div>
+          </div>
+
+          <!-- Report Paper Container -->
+          <div class="report-paper" id="printableReportArea">
+
+            <!-- Report Header Banner -->
+            <div class="report-header-banner">
+              <div>
+                <div
+                  style="font-size: 0.8rem; font-weight: 700; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px;">
+                  Automated Statistical Intelligence Engine
+                </div>
+                <h1 id="reportDatasetTitle">Executive Data Analytics Report</h1>
+
+                <div class="report-meta-chips">
+                  <span class="meta-chip" id="reportGeneratedDate"><i data-lucide="calendar"></i> Date: Generated</span>
+                  <span class="meta-chip" id="reportSourceFile"><i data-lucide="file"></i> Source: dataset.csv</span>
+                  <span class="meta-chip" id="reportRecordCount"><i data-lucide="database"></i> Records: 0</span>
+                  <span class="meta-chip" id="reportTargetVar"><i data-lucide="crosshair"></i> Primary Target:
+                    None</span>
+                </div>
+              </div>
+
+              <div class="brand-logo" style="width: 50px; height: 50px; font-size: 1.4rem;">
+                <i data-lucide="sparkles"></i>
+              </div>
+            </div>
+
+            <!-- Section 1: Executive Summary & Strategic Scorecard -->
+            <div class="report-section-block">
+              <h3 class="report-section-title"><i data-lucide="clipboard-list"></i> 1. Executive Summary & Strategic Scorecard</h3>
+              <div class="executive-summary-text" id="reportExecutiveSummary">
+                Loading executive narrative...
+              </div>
+            </div>
+
+            <!-- Section 2: Multi-Dataset Architecture & Relational Schema -->
+            <div class="report-section-block">
+              <h3 class="report-section-title"><i data-lucide="database"></i> 2. Multi-Dataset Architecture & Relational Schema</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+                Comprehensive inventory of active and workspace datasets, dimensions, schema lineage, and primary/foreign key connections.
+              </p>
+              <div class="report-table-responsive">
+                <table class="report-data-table" id="reportDatasetCatalogTable">
+                  <thead>
+                    <tr>
+                      <th>Dataset Name</th>
+                      <th>Status</th>
+                      <th>Format</th>
+                      <th>Rows (N)</th>
+                      <th>Attributes (D)</th>
+                      <th>Memory Size</th>
+                      <th>Health Score</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reportDatasetCatalogBody">
+                    <!-- Populated by report.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Section 3: Data Quality & Preprocessing Diagnostics -->
+            <div class="report-section-block">
+              <h3 class="report-section-title"><i data-lucide="check-circle-2"></i> 3. Data Quality & Preprocessing Diagnostics</h3>
+              <div class="stats-row" style="margin-top: 14px;" id="reportQualityKpiRow">
+                <!-- Quality metrics -->
+              </div>
+              <div class="executive-summary-text" id="reportQualityAuditText" style="font-size: 0.88rem; margin-top: 12px;">
+                <!-- Quality audit narrative -->
+              </div>
+            </div>
+
+            <!-- Section 4: Univariate Parametric & Non-Parametric Deep-Dive -->
+            <div class="report-section-block">
+              <h3 class="report-section-title"><i data-lucide="calculator"></i> 4. Univariate Parametric & Non-Parametric Deep-Dive</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+                Central tendencies, dispersion indices, skewness coefficients, and distribution normality metrics for all attributes.
+              </p>
+              <div class="report-table-responsive">
+                <table class="report-data-table" id="reportUnivariateTable">
+                  <thead>
+                    <tr>
+                      <th>Attribute</th>
+                      <th>Scale</th>
+                      <th>Count</th>
+                      <th>Mean (μ)</th>
+                      <th>Median (Q2)</th>
+                      <th>Std Dev (σ)</th>
+                      <th>IQR</th>
+                      <th>Min - Max</th>
+                      <th>Skewness (γ1)</th>
+                      <th>Kurtosis (γ2)</th>
+                      <th>Distribution Shape</th>
+                    </tr>
+                  </thead>
+                  <tbody id="reportUnivariateBody">
+                    <!-- Populated by report.js -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Section 5: Automated Key Findings & Discoveries -->
+            <div class="report-section-block">
+              <h3 class="report-section-title"><i data-lucide="lightbulb"></i> 5. Key Driver Discoveries & Multivariate Correlations</h3>
+              <div class="insights-deck" id="reportKeyFindingsDeck">
+                <!-- Dynamically generated insight cards -->
+              </div>
+            </div>
+
+            <!-- Section 6: Categorical Segmentation & Pareto Distribution -->
+            <div class="report-section-block">
+              <h3 class="report-section-title"><i data-lucide="pie-chart"></i> 6. Categorical Segmentation & Pareto Distribution</h3>
+              <div class="executive-summary-text" id="reportSegmentationNarrative">
+                <!-- Synthesized by report.js -->
+              </div>
+            </div>
+
+            <!-- Section 7: Embedded Visual Diagnostic Digest -->
+            <div class="report-section-block">
+              <h3 class="report-section-title"><i data-lucide="bar-chart"></i> 7. Visual Diagnostic Digest</h3>
+              <div class="charts-grid-main" style="margin-top: 16px;">
+                <div class="glass-card chart-card-col-6" style="margin-bottom: 0;">
+                  <h4 style="font-size: 0.95rem; margin-bottom: 12px;" id="reportChart1Title">Target Variable Distribution</h4>
+                  <div class="chart-container-box" style="height: 260px;">
+                    <canvas id="reportChart1"></canvas>
+                  </div>
+                </div>
+                <div class="glass-card chart-card-col-6" style="margin-bottom: 0;">
+                  <h4 style="font-size: 0.95rem; margin-bottom: 12px;" id="reportChart2Title">Target vs Top Correlated Driver</h4>
+                  <div class="chart-container-box" style="height: 260px;">
+                    <canvas id="reportChart2"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 8: Professional Data Analyst Methodology & Statistical Rationales -->
+            <div class="report-section-block">
+              <h3 class="report-section-title"><i data-lucide="book-open"></i> 8. Professional Data Analyst Methodology & Statistical Rationales</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
+                Rigorous scientific justifications explaining why each specific analytical method and transformation was applied.
+              </p>
+              <div id="reportMethodologyContainer">
+                <!-- Populated by report.js -->
+              </div>
+            </div>
+
+            <!-- Section 9: Actionable Strategic Recommendations & Phased Roadmap -->
+            <div class="report-section-block">
+              <h3 class="report-section-title"><i data-lucide="trending-up"></i> 9. Actionable Strategic Recommendations & Phased Roadmap</h3>
+              <div class="roadmap-phase-container" id="reportRoadmapContainer">
+                <!-- Populated by report.js -->
+              </div>
+            </div>
+
+            <!-- Section 10: Technical Metadata & Audit Footprint -->
+            <div class="report-section-block" style="margin-bottom: 0; border-top: 1px solid var(--border-color); padding-top: 20px;">
+              <p style="font-size: 0.75rem; color: var(--text-dim); line-height: 1.6;" id="reportTechnicalFootnote">
+                <strong>Governance & Compliance:</strong> This analytical report was generated using client-side algorithmic statistical Natural Language Generation (NLG), robust interquartile and Pearson correlation profiling, and automated exploratory data analysis. No external cloud AI APIs or proprietary remote services were accessed during this computation.
+              </p>
+            </div>
+
+
+          </div>
+
+        </section>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- =====================================================================
+       LIBRARIES & SCRIPT DEPENDENCIES
+       ===================================================================== -->
+
+  <!-- PapaParse for CSV/TSV parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.3/papaparse.min.js"></script>
+
+  <!-- SheetJS for Excel XLSX/XLS parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <!-- Chart.js for data visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Application Modules -->
+  <script src="js/app.js"></script>
+  <script src="js/upload.js"></script>
+  <script src="js/explorer.js"></script>
+  <script src="js/preprocessing.js"></script>
+  <script src="js/analysis.js"></script>
+  <script src="js/report.js"></script>
+
+</body>
+
+</html>

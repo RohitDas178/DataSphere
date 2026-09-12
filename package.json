@@ -1,0 +1,17 @@
+{
+  "name": "datasphere-analytics",
+  "version": "1.0.0",
+  "description": "DataSphere Analytics - Intelligent Client-Side EDA & AI Report Engine",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "analytics",
+    "eda",
+    "visualization"
+  ],
+  "author": "",
+  "license": "ISC"
+}
