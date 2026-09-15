@@ -80,7 +80,7 @@ window.addDatasetToWorkspace = function (datasetObj, setActive = true) {
     fileSize: datasetObj.fileSize || 0,
     fileType: datasetObj.fileType || 'CSV',
     rawData: datasetObj.rawData || [],
-    cleanData: datasetObj.cleanData ? JSON.parse(JSON.stringify(datasetObj.cleanData)) : JSON.parse(JSON.stringify(datasetObj.rawData || [])),
+    cleanData: datasetObj.cleanData ? datasetObj.cleanData.map(r => ({ ...r })) : (datasetObj.rawData ? datasetObj.rawData.map(r => ({ ...r })) : []),
     columnInfo: datasetObj.columnInfo || {},
     columnNames: datasetObj.columnNames || (datasetObj.rawData && datasetObj.rawData[0] ? Object.keys(datasetObj.rawData[0]) : []),
     selectedAttributes: datasetObj.selectedAttributes || (datasetObj.rawData && datasetObj.rawData[0] ? Object.keys(datasetObj.rawData[0]) : []),
@@ -435,7 +435,7 @@ window.executeDatasetJoin = function () {
     fileSize: mergedRows.length * 160,
     fileType: 'Joined Dataset',
     rawData: mergedRows,
-    cleanData: JSON.parse(JSON.stringify(mergedRows))
+    cleanData: mergedRows.map(r => ({ ...r }))
   }, true);
 
   showToast(`Successfully created joined dataset "${mergedName}" with ${mergedRows.length.toLocaleString()} rows!`, 'success');

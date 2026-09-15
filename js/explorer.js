@@ -425,19 +425,27 @@ function parseNumericValue(val) {
 }
 
 /**
- * Calculate count of exact duplicate rows
+ * Calculate count of exact duplicate rows (optimized for scale)
  */
 function calculateDuplicateCount(data) {
+  if (!data || data.length === 0) return 0;
   const seen = new Set();
   let duplicates = 0;
-  data.forEach(row => {
-    const key = JSON.stringify(row);
+  const sampleData = data.length > 60000 ? data.slice(0, 60000) : data;
+  
+  sampleData.forEach(row => {
+    if (!row) return;
+    const key = Object.values(row).join('\u001F');
     if (seen.has(key)) {
       duplicates++;
     } else {
       seen.add(key);
     }
   });
+
+  if (data.length > 60000) {
+    return Math.round((duplicates / 60000) * data.length);
+  }
   return duplicates;
 }
 

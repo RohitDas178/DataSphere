@@ -1345,6 +1345,7 @@ body {
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1565,10 +1566,21 @@ body {
   gap: 6px;
 }
 
-.strategy-impact-col.mechanism h6 { color: var(--secondary); }
-.strategy-impact-col.bestfor h6 { color: var(--accent-emerald); }
-.strategy-impact-col.impact h6 { color: var(--accent-amber); }
-.strategy-impact-col.risks h6 { color: var(--accent-rose); }
+.strategy-impact-col.mechanism h6 {
+  color: var(--secondary);
+}
+
+.strategy-impact-col.bestfor h6 {
+  color: var(--accent-emerald);
+}
+
+.strategy-impact-col.impact h6 {
+  color: var(--accent-amber);
+}
+
+.strategy-impact-col.risks h6 {
+  color: var(--accent-rose);
+}
 
 .strategy-impact-col p {
   font-size: 0.82rem;
@@ -2090,10 +2102,21 @@ body {
   gap: 6px;
 }
 
-.chart-meta-section.desc h6 { color: var(--secondary); }
-.chart-meta-section.why h6 { color: var(--accent-emerald); }
-.chart-meta-section.alt h6 { color: var(--accent-amber); }
-.chart-meta-section.insights h6 { color: var(--primary-light); }
+.chart-meta-section.desc h6 {
+  color: var(--secondary);
+}
+
+.chart-meta-section.why h6 {
+  color: var(--accent-emerald);
+}
+
+.chart-meta-section.alt h6 {
+  color: var(--accent-amber);
+}
+
+.chart-meta-section.insights h6 {
+  color: var(--primary-light);
+}
 
 .chart-meta-section p {
   color: var(--text-muted);
@@ -2845,9 +2868,17 @@ body {
   position: relative;
 }
 
-.roadmap-phase-card.phase-1 { border-left: 4px solid var(--accent-emerald); }
-.roadmap-phase-card.phase-2 { border-left: 4px solid var(--primary); }
-.roadmap-phase-card.phase-3 { border-left: 4px solid var(--accent-amber); }
+.roadmap-phase-card.phase-1 {
+  border-left: 4px solid var(--accent-emerald);
+}
+
+.roadmap-phase-card.phase-2 {
+  border-left: 4px solid var(--primary);
+}
+
+.roadmap-phase-card.phase-3 {
+  border-left: 4px solid var(--accent-amber);
+}
 
 .roadmap-phase-badge {
   font-size: 0.7rem;
@@ -2860,9 +2891,20 @@ body {
   margin-bottom: 8px;
 }
 
-.phase-1 .roadmap-phase-badge { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
-.phase-2 .roadmap-phase-badge { background: rgba(99, 102, 241, 0.15); color: var(--primary-light); }
-.phase-3 .roadmap-phase-badge { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
+.phase-1 .roadmap-phase-badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-emerald);
+}
+
+.phase-2 .roadmap-phase-badge {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary-light);
+}
+
+.phase-3 .roadmap-phase-badge {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-amber);
+}
 
 .roadmap-phase-card h4 {
   font-size: 0.95rem;
