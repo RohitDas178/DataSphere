@@ -174,6 +174,54 @@ window.profileDataset = function () {
   window.AppState.anomalies.missingCount = totalMissing;
   window.AppState.anomalies.duplicateCount = duplicateCount;
 
+  // Schema and dirty-data diagnostics
+  const missingTokens = new Set(['', 'na', 'n/a', 'null', 'none', 'nan', '?', '--']);
+  const duplicateColumns = columns.filter((column, index) => columns.findIndex(c => c.toLowerCase() === column.toLowerCase()) !== index);
+  const dirtyIssues = [];
+
+  columns.forEach(col => {
+    const values = data.map(row => row[col]);
+    const normalized = values.map(value => String(value ?? '').trim().toLowerCase());
+    const tokenCount = normalized.filter(value => missingTokens.has(value)).length;
+    if (tokenCount > 0) {
+      dirtyIssues.push({ severity: 'warning', category: 'Missing markers', column: col, count: tokenCount, detail: 'Values such as NA, N/A, NULL, ?, or -- should be normalized to missing.' });
+    }
+
+    const trimmedChanges = values.filter(value => typeof value === 'string' && value !== value.trim()).length;
+    if (trimmedChanges > 0) {
+      dirtyIssues.push({ severity: 'info', category: 'Whitespace', column: col, count: trimmedChanges, detail: 'Leading or trailing whitespace detected.' });
+    }
+
+    const info = window.AppState.columnInfo[col];
+    if (info?.uniqueCount === 1) {
+      dirtyIssues.push({ severity: 'warning', category: 'Constant column', column: col, count: data.length, detail: 'This column has only one distinct non-empty value.' });
+    }
+
+    if (info?.type === 'numeric') {
+      const mixedFormats = values.filter(value => typeof value === 'string' && /[,]|[$£€¥]|%/.test(value)).length;
+      if (mixedFormats > 0) {
+        dirtyIssues.push({ severity: 'warning', category: 'Numeric formatting', column: col, count: mixedFormats, detail: 'Currency, percent, or grouping characters may need normalization.' });
+      }
+    }
+
+    if (info?.type === 'categorical') {
+      const caseVariants = new Map();
+      normalized.forEach(value => { if (value) caseVariants.set(value, (caseVariants.get(value) || 0) + 1); });
+      const originalVariants = new Map();
+      values.forEach(value => { if (typeof value === 'string' && value.trim()) originalVariants.set(value.trim(), (originalVariants.get(value.trim()) || 0) + 1); });
+      if (originalVariants.size > caseVariants.size) {
+        dirtyIssues.push({ severity: 'info', category: 'Text case variants', column: col, count: originalVariants.size - caseVariants.size, detail: 'Different casing represents the same normalized text value.' });
+      }
+    }
+  });
+
+  if (duplicateColumns.length > 0) {
+    dirtyIssues.unshift({ severity: 'error', category: 'Duplicate column names', column: duplicateColumns.join(', '), count: duplicateColumns.length, detail: 'Column names differ only in case or collide after normalization.' });
+  }
+
+  window.AppState.dirtyDataIssues = dirtyIssues;
+  window.AppState.anomalies.constantCols = columns.filter(col => window.AppState.columnInfo[col]?.uniqueCount === 1);
+
   // Set default selected attributes and Target Attribute
   window.AppState.selectedAttributes = [...columns];
 
@@ -204,6 +252,22 @@ window.renderExplorer = function () {
   setText('kpiCategoricalCols', categoricalCount.toString());
   setText('kpiMissingCount', window.AppState.anomalies.missingCount.toLocaleString());
   setText('kpiDuplicateCount', window.AppState.anomalies.duplicateCount.toLocaleString());
+
+  const diagnosticsList = document.getElementById('dirtyDataDiagnosticsList');
+  if (diagnosticsList) {
+    const issues = window.AppState.dirtyDataIssues || [];
+    if (issues.length === 0) {
+      diagnosticsList.innerHTML = '<div class="dirty-data-no-issues"><i data-lucide="circle-check"></i> No additional schema or dirty-data issues detected.</div>';
+    } else {
+      diagnosticsList.innerHTML = issues.slice(0, 20).map(issue => `
+        <div class="dirty-data-issue ${escapeHTML(issue.severity)}">
+          <div><strong>${escapeHTML(issue.category)}</strong><span>${escapeHTML(issue.column)}</span></div>
+          <p>${escapeHTML(issue.detail)} <b>${issue.count} occurrence${issue.count === 1 ? '' : 's'}</b></p>
+        </div>`).join('');
+    }
+  }
+
+  if (window.lucide) window.lucide.createIcons();
 
   // 2. Update Filter Chip Counts
   setText('countAllAttrs', columns.length.toString());

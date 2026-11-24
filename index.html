@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="css/style.css">
 
   <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 </head>
 
 <body>
@@ -230,6 +230,23 @@
               <!-- Populated dynamically with PDA rationales -->
             </div>
 
+            <div class="join-diagnostics-grid" id="joinDiagnostics">
+              <!-- Populated dynamically with duplicate-key and cardinality diagnostics -->
+            </div>
+
+            <div class="join-preview-box">
+              <div class="join-preview-header">
+                <strong><i data-lucide="eye"></i> Join Preview</strong>
+                <span id="joinPreviewCount">0 preview rows</span>
+              </div>
+              <div class="join-preview-table-wrap">
+                <table class="data-table">
+                  <thead id="joinPreviewHead"></thead>
+                  <tbody id="joinPreviewBody"></tbody>
+                </table>
+              </div>
+            </div>
+
             <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
               <button class="btn btn-primary" id="btnExecuteJoin" onclick="window.executeDatasetJoin()">
                 <i data-lucide="play"></i> Execute Relational Join & Create Combined Dataset <i data-lucide="arrow-right"></i>
@@ -393,6 +410,16 @@
               </div>
               <div class="kpi-icon" style="color: var(--accent-rose);"><i data-lucide="copy"></i></div>
             </div>
+          </div>
+
+          <div class="glass-card" id="dirtyDataDiagnosticsCard">
+            <div class="card-title-bar">
+              <div>
+                <h3><i data-lucide="scan-line"></i> Dirty-Data & Schema Diagnostics</h3>
+                <p>Potential parser, formatting, missing-marker, and schema issues detected in this dataset.</p>
+              </div>
+            </div>
+            <div id="dirtyDataDiagnosticsList" class="dirty-data-diagnostics-list"></div>
           </div>
 
           <!-- Attribute Selection Master Toolbar -->

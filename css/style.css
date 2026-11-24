@@ -2776,8 +2776,87 @@ body {
   color: var(--text-muted);
 }
 
-.join-rationale-box strong {
+ .dirty-data-diagnostics-list {
+  display: grid;
+  gap: 8px;
+}
+
+.dirty-data-issue {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.35fr) 1fr;
+  gap: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+}
+
+.dirty-data-issue.error { border-left: 3px solid var(--accent-rose); }
+.dirty-data-issue.warning { border-left: 3px solid var(--accent-amber); }
+.dirty-data-issue.info { border-left: 3px solid var(--secondary); }
+.dirty-data-issue div { display: flex; flex-direction: column; }
+.dirty-data-issue div span { color: var(--text-muted); font-size: 0.78rem; }
+.dirty-data-issue p { margin: 0; color: var(--text-muted); }
+.dirty-data-no-issues { color: var(--accent-emerald); padding: 8px 0; }
+
+ .join-rationale-box strong {
   color: var(--secondary);
+}
+
+.join-diagnostics-grid {
+ display: grid;
+ grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+ gap: 12px;
+ margin: 12px 0;
+}
+
+.join-diagnostic-card {
+ background: var(--bg-surface);
+ border: 1px solid var(--border-color);
+ border-radius: var(--radius-md);
+ padding: 12px;
+}
+
+.join-diagnostic-card span {
+ display: block;
+ color: var(--text-muted);
+ font-size: 0.78rem;
+ margin-bottom: 4px;
+}
+
+.join-diagnostic-card strong {
+ color: var(--text-primary);
+ font-size: 1.05rem;
+}
+
+.join-diagnostic-card.warning strong {
+ color: var(--accent-amber);
+}
+
+.join-preview-box {
+ margin-top: 12px;
+ border: 1px solid var(--border-color);
+ border-radius: var(--radius-md);
+ background: var(--bg-surface);
+ overflow: hidden;
+}
+
+.join-preview-header {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ padding: 10px 12px;
+ border-bottom: 1px solid var(--border-color);
+ color: var(--text-muted);
+ font-size: 0.82rem;
+}
+
+.join-preview-header strong {
+ color: var(--text-primary);
+}
+
+.join-preview-table-wrap {
+ max-height: 220px;
+ overflow: auto;
 }
 
 /* ==========================================================================

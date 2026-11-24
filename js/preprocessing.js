@@ -287,6 +287,11 @@ function initPreprocessingEvents() {
   if (btnStep2Apply) {
     btnStep2Apply.addEventListener('click', () => {
       const strategy = document.getElementById('duplicateStrategySelect')?.value || 'first';
+      const dupCount = window.AppState.anomalies?.duplicateCount || 0;
+      const rawCount = window.AppState.rawData?.length || 0;
+      const postCount = strategy === 'none' ? rawCount : Math.max(0, rawCount - dupCount);
+      if (!window.confirm(`Apply deduplication?\n\nProjected result: ${rawCount.toLocaleString()} → ${postCount.toLocaleString()} rows (${dupCount} duplicates).\n\nThis choice is reversible only by reloading the original dataset.`)) return;
+
       window.AppState.preprocessing.config.deduplication.skipped = false;
       window.AppState.preprocessing.config.deduplication.enabled = strategy !== 'none';
       window.AppState.preprocessing.config.deduplication.strategy = strategy;
@@ -324,6 +329,16 @@ function initPreprocessingEvents() {
   if (btnStep3Apply) {
     btnStep3Apply.addEventListener('click', () => {
       const strategy = document.getElementById('missingStrategySelect')?.value || 'smart';
+      const rawCount = window.AppState.rawData?.length || 0;
+      const missingTotal = window.AppState.anomalies?.missingCount || 0;
+      let postDescription = `${missingTotal} missing cells will be treated; ${rawCount.toLocaleString()} rows retained`;
+      if (strategy === 'drop') {
+        const retained = (window.AppState.rawData || []).filter(row =>
+          Object.values(row).every(value => value !== null && value !== undefined && String(value).trim() !== '')
+        ).length;
+        postDescription = `${rawCount.toLocaleString()} → ${retained.toLocaleString()} rows`;
+      }
+      if (!window.confirm(`Apply missing-value strategy "${getImputationLabel(strategy)}"?\n\nProjected result: ${postDescription}.\n\nContinue?`)) return;
       window.AppState.preprocessing.config.missingValues.skipped = false;
       window.AppState.preprocessing.config.missingValues.enabled = true;
       window.AppState.preprocessing.config.missingValues.strategy = strategy;
@@ -361,6 +376,13 @@ function initPreprocessingEvents() {
   if (btnStep4Apply) {
     btnStep4Apply.addEventListener('click', () => {
       const strategy = document.getElementById('outlierStrategySelect')?.value || 'winsorize';
+      const outlierTotal = window.AppState.anomalies?.outlierCount || 0;
+      const action = strategy === 'keep'
+        ? 'preserve outliers as-is'
+        : strategy === 'winsorize'
+          ? `cap ${outlierTotal} identified extreme points`
+          : `remove rows containing outliers (${outlierTotal} identified points)`;
+      if (!window.confirm(`Apply outlier treatment?\n\nProjected action: ${action}.\n\nContinue?`)) return;
       window.AppState.preprocessing.config.outliers.skipped = false;
       window.AppState.preprocessing.config.outliers.enabled = strategy !== 'keep';
       window.AppState.preprocessing.config.outliers.strategy = strategy;
@@ -664,6 +686,37 @@ function getStepDefaultIcon(stepNum) {
     6: '<i data-lucide="check-circle-2" style="width: 15px; height: 15px;"></i>'
   };
   return icons[stepNum] || '<i data-lucide="circle" style="width: 15px; height: 15px;"></i>';
+}
+
+function calculateNumericImpact(rows) {
+  const columns = window.AppState.columnNames || [];
+  const summary = [];
+  columns.forEach(col => {
+    if (window.AppState.columnInfo?.[col]?.type !== 'numeric') return;
+    const values = rows.map(row => Number(row[col])).filter(value => Number.isFinite(value));
+    if (!values.length) return;
+    const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+    const variance = values.reduce((sum, value) => sum + ((value - mean) ** 2), 0) / values.length;
+    summary.push({ col, mean, variance });
+  });
+  return summary;
+}
+
+function formatImpactDelta(before, after) {
+  const delta = after - before;
+  return `${before.toLocaleString(undefined, { maximumFractionDigits: 2 })} → ${after.toLocaleString(undefined, { maximumFractionDigits: 2 })} (${delta >= 0 ? '+' : ''}${delta.toLocaleString(undefined, { maximumFractionDigits: 2 })})`;
+}
+
+function renderNumericImpactPreview(container, beforeRows, afterRows) {
+  const before = calculateNumericImpact(beforeRows);
+  const after = calculateNumericImpact(afterRows);
+  const afterByColumn = new Map(after.map(item => [item.col, item]));
+  const rows = before.slice(0, 4).map(item => {
+    const changed = afterByColumn.get(item.col);
+    if (!changed) return `<tr><td>${escapeHTML(item.col)}</td><td>Removed</td></tr>`;
+    return `<tr><td>${escapeHTML(item.col)}</td><td>Mean ${formatImpactDelta(item.mean, changed.mean)}</td><td>Variance ${formatImpactDelta(item.variance, changed.variance)}</td></tr>`;
+  }).join('');
+  return rows ? `<div class="impact-preview-table"><table class="data-table"><tbody>${rows}</tbody></table></div>` : '';
 }
 
 /**
@@ -1515,7 +1568,7 @@ function renderCleanTablePreview() {
 /**
  * Export Cleaned Dataset File (CSV or JSON)
  */
-function exportCleanDataset(format) {
+async function exportCleanDataset(format) {
   const data = window.AppState.cleanData;
   if (!data || data.length === 0) {
     showToast('No clean dataset available to export.', 'error');
@@ -1524,16 +1577,54 @@ function exportCleanDataset(format) {
 
   const baseName = window.AppState.fileName.replace(/\.[^/.]+$/, "") || 'dataset';
   const outFileName = `${baseName}_cleaned.${format}`;
+  const protectedData = data.map(row => {
+    const copy = {};
+    Object.entries(row).forEach(([column, value]) => {
+      copy[column] = typeof value === 'string' && /^[=+@-]/.test(value.trim())
+        ? `'${value}`
+        : value;
+    });
+    return copy;
+  });
+  const canonicalData = format === 'csv'
+    ? Papa.unparse(protectedData)
+    : JSON.stringify(protectedData, null, 2);
+  const datasetHash = await window.DataSphereUtilities.sha256(canonicalData);
+  const rawHash = await window.DataSphereUtilities.sha256(
+    window.DataSphereUtilities.canonicalString(window.AppState.rawData || [])
+  );
+
+  const manifest = {
+    schemaVersion: '1.0',
+    datasetId: window.AppState.activeDatasetId,
+    sourceFileName: window.AppState.fileName,
+    sourceFileType: window.AppState.fileType,
+    exportedAt: new Date().toISOString(),
+    exportedFormat: format,
+    sourceRowCount: window.AppState.rawData?.length || 0,
+    exportedRowCount: data.length,
+    exportedColumnCount: window.AppState.columnNames?.length || 0,
+    sourceSha256: rawHash,
+    exportedSha256: datasetHash,
+    preprocessing: {
+      config: window.AppState.preprocessing?.config || {},
+      decisions: window.AppState.preprocessing?.stepDecisions || {},
+      cleaningLog: window.AppState.cleaningLog || []
+    },
+    application: {
+      name: 'DataSphere Analytics',
+      version: '1.0.0'
+    }
+  };
 
   if (format === 'csv') {
-    const csvContent = Papa.unparse(data);
-    triggerDownload(csvContent, outFileName, 'text/csv;charset=utf-8;');
+    triggerDownload(canonicalData, outFileName, 'text/csv;charset=utf-8;');
   } else if (format === 'json') {
-    const jsonContent = JSON.stringify(data, null, 2);
-    triggerDownload(jsonContent, outFileName, 'application/json;charset=utf-8;');
+    triggerDownload(canonicalData, outFileName, 'application/json;charset=utf-8;');
   }
+  triggerDownload(JSON.stringify(manifest, null, 2), `${baseName}_manifest.json`, 'application/json;charset=utf-8;');
 
-  showToast(`Exported ${outFileName}`, 'success');
+  showToast(`Exported ${outFileName} and audit manifest`, 'success');
 }
 
 function triggerDownload(content, filename, mimeType) {

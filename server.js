@@ -13,27 +13,51 @@ const MIME_TYPES = {
   '.svg': 'image/svg+xml'
 };
 
+const safeHeaders = {
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data: https://fonts.gstatic.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'", 
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'no-referrer',
+  'X-Frame-Options': 'DENY',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()'
+};
+
 const server = http.createServer((req, res) => {
   let reqPath = req.url.split('?')[0];
   if (reqPath === '/' || reqPath === '') {
     reqPath = '/index.html';
   }
 
-  const filePath = path.join(__dirname, reqPath);
+  let decodedPath;
+  try {
+    decodedPath = decodeURIComponent(reqPath);
+  } catch (_) {
+    res.writeHead(400, { ...safeHeaders, 'Content-Type': 'text/plain' });
+    res.end('400 Bad Request');
+    return;
+  }
+
+  const relativePath = decodedPath.replace(/^[/\\]+/, '');
+  const filePath = path.resolve(__dirname, relativePath);
+  if (filePath !== __dirname && !filePath.startsWith(`${__dirname}${path.sep}`)) {
+    res.writeHead(403, { ...safeHeaders, 'Content-Type': 'text/plain' });
+    res.end('403 Forbidden');
+    return;
+  }
+
 
   fs.readFile(filePath, (err, content) => {
     if (err) {
       if (err.code === 'ENOENT') {
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.writeHead(404, { ...safeHeaders, 'Content-Type': 'text/plain' });
         res.end('404 Not Found');
       } else {
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.writeHead(500, { ...safeHeaders, 'Content-Type': 'text/plain' });
         res.end('500 Internal Server Error');
       }
     } else {
       const ext = path.extname(filePath).toLowerCase();
       const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-      res.writeHead(200, { 'Content-Type': contentType });
+      res.writeHead(200, { ...safeHeaders, 'Content-Type': contentType });
       res.end(content);
     }
   });

@@ -27,6 +27,33 @@ window.createDefaultPrepState = function () {
   };
 };
 
+window.DataSphereUtilities = {
+  canonicalString(value) {
+    if (Array.isArray(value)) return `[${value.map(item => this.canonicalString(item)).join(',')}]`;
+    if (value && typeof value === 'object') {
+      return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${this.canonicalString(value[key])}`).join(',')}}`;
+    }
+    return JSON.stringify(value);
+  },
+
+  async sha256(text) {
+    if (!window.crypto?.subtle) return null;
+    const bytes = new TextEncoder().encode(text);
+    const digest = await window.crypto.subtle.digest('SHA-256', bytes);
+    return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+  },
+
+  deterministicId(fileName, rows) {
+    let hash = 2166136261;
+    const text = `${fileName}\n${this.canonicalString(rows || [])}`;
+    for (let i = 0; i < text.length; i++) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return `ds_${(hash >>> 0).toString(16).padStart(8, '0')}`;
+  }
+};
+
 // Global Application State
 window.AppState = {
   // Multi-Dataset Catalog
@@ -73,7 +100,10 @@ window.AppState = {
  * Multi-Dataset Management: Add Dataset to Workspace
  */
 window.addDatasetToWorkspace = function (datasetObj, setActive = true) {
-  const dsId = 'ds_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+  const dsId = window.DataSphereUtilities.deterministicId(
+    datasetObj.fileName || 'dataset.csv',
+    datasetObj.rawData || []
+  );
   const newDataset = {
     id: dsId,
     fileName: datasetObj.fileName || 'dataset.csv',
@@ -314,6 +344,126 @@ window.renderRelationalJoinStudio = function () {
   updateJoinRationale();
 };
 
+function normalizeJoinKey(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+function analyzeJoinKey(rows, key) {
+  const counts = new Map();
+  let missing = 0;
+  rows.forEach(row => {
+    const value = normalizeJoinKey(row[key]);
+    if (!value) missing++;
+    else counts.set(value, (counts.get(value) || 0) + 1);
+  });
+  return {
+    counts,
+    uniqueKeys: counts.size,
+    duplicateKeys: [...counts.values()].filter(count => count > 1).length,
+    duplicateRows: [...counts.values()].reduce((sum, count) => sum + Math.max(0, count - 1), 0),
+    missing
+  };
+}
+
+function buildJoinPreview(dsA, dsB, keyA, keyB, joinType) {
+  if (joinType === 'union') return [...dsA.rawData, ...dsB.rawData].slice(0, 5);
+
+  const mapB = new Map();
+  dsB.rawData.forEach(rowB => {
+    const key = normalizeJoinKey(rowB[keyB]);
+    if (key) {
+      if (!mapB.has(key)) mapB.set(key, []);
+      mapB.get(key).push(rowB);
+    }
+  });
+
+  const output = [];
+  const matchedKeysB = new Set();
+  dsA.rawData.forEach(rowA => {
+    if (output.length >= 5) return;
+    const key = normalizeJoinKey(rowA[keyA]);
+    const matches = mapB.get(key) || [];
+    if (matches.length) {
+      matchedKeysB.add(key);
+      for (const rowB of matches) {
+        const combined = { ...rowA };
+        Object.keys(rowB).forEach(colB => {
+          const finalCol = (colB !== keyB && combined[colB] !== undefined)
+            ? `${colB}_${dsB.fileName.split('.')[0]}` : colB;
+          combined[finalCol] = rowB[colB];
+        });
+        output.push(combined);
+        if (output.length >= 5) break;
+      }
+    } else if (joinType === 'left' || joinType === 'full') {
+      const combined = { ...rowA };
+      dsB.columnNames.forEach(colB => { if (combined[colB] === undefined) combined[colB] = ''; });
+      output.push(combined);
+    }
+  });
+
+  if (joinType === 'full' && output.length < 5) {
+    dsB.rawData.forEach(rowB => {
+      if (output.length >= 5) return;
+      const key = normalizeJoinKey(rowB[keyB]);
+      if (!matchedKeysB.has(key)) {
+        const combined = { ...rowB };
+        dsA.columnNames.forEach(colA => { if (combined[colA] === undefined) combined[colA] = ''; });
+        output.push(combined);
+      }
+    });
+  }
+  return output;
+}
+
+function executeJoinRows(dsA, dsB, keyA, keyB, joinType) {
+  if (joinType === 'union') return [...dsA.rawData, ...dsB.rawData];
+
+  const mapB = new Map();
+  dsB.rawData.forEach(rowB => {
+    const key = normalizeJoinKey(rowB[keyB]);
+    if (key) {
+      if (!mapB.has(key)) mapB.set(key, []);
+      mapB.get(key).push(rowB);
+    }
+  });
+
+  const output = [];
+  const matchedKeysB = new Set();
+  dsA.rawData.forEach(rowA => {
+    const key = normalizeJoinKey(rowA[keyA]);
+    const matches = mapB.get(key) || [];
+    if (matches.length) {
+      matchedKeysB.add(key);
+      matches.forEach(matchB => {
+        const combined = { ...rowA };
+        Object.keys(matchB).forEach(colB => {
+          const finalCol = (colB !== keyB && combined[colB] !== undefined)
+            ? `${colB}_${dsB.fileName.split('.')[0]}` : colB;
+          combined[finalCol] = matchB[colB];
+        });
+        output.push(combined);
+      });
+    } else if (joinType === 'left' || joinType === 'full') {
+      const combined = { ...rowA };
+      dsB.columnNames.forEach(colB => { if (combined[colB] === undefined) combined[colB] = ''; });
+      output.push(combined);
+    }
+  });
+
+  if (joinType === 'full') {
+    dsB.rawData.forEach(rowB => {
+      const key = normalizeJoinKey(rowB[keyB]);
+      if (!matchedKeysB.has(key)) {
+        const combined = { ...rowB };
+        dsA.columnNames.forEach(colA => { if (combined[colA] === undefined) combined[colA] = ''; });
+        output.push(combined);
+      }
+    });
+  }
+  return output;
+}
+
 function updateJoinRationale() {
   const selectA = document.getElementById('joinTableASelect');
   const selectB = document.getElementById('joinTableBSelect');
@@ -332,18 +482,80 @@ function updateJoinRationale() {
 
   if (!dsA || !dsB || !keyA || !keyB) return;
 
-  let rationale = ``;
-  if (joinType === 'inner') {
-    rationale = `<strong>Professional Analyst Rationale (Inner Join):</strong> Retains only records where <em>Table A [${keyA}]</em> exactly matches <em>Table B [${keyB}]</em>. Optimal when performing strict entity matching across transactional facts and dimension tables with zero tolerance for unmatched nulls.`;
-  } else if (joinType === 'left') {
-    rationale = `<strong>Professional Analyst Rationale (Left Outer Join):</strong> Retains all <strong>${dsA.rawData.length.toLocaleString()} records</strong> from primary table <em>"${dsA.fileName}"</em>, appending enriched attributes from <em>"${dsB.fileName}"</em> where keys match. Missing matches in Table B are safely filled with nulls. Ideal for master customer/account analytics.`;
-  } else if (joinType === 'full') {
-    rationale = `<strong>Professional Analyst Rationale (Full Outer Join):</strong> Preserves the full union of both datasets, capturing unmatched records from both sources. Optimal for comprehensive cross-departmental reconciliation and data pipeline gap analysis.`;
-  } else if (joinType === 'union') {
-    rationale = `<strong>Professional Analyst Rationale (Vertical Union / Append):</strong> Stacks rows of both datasets vertically into a single unified temporal or batch table. Ideal for merging monthly sales batches, sensor telemetry logs, or multi-region extracts.`;
+  const diagA = analyzeJoinKey(dsA.rawData, keyA);
+  const diagB = analyzeJoinKey(dsB.rawData, keyB);
+  const matchedKeys = [...diagA.counts.keys()].filter(key => diagB.counts.has(key));
+  let estimatedRows;
+  let unmatchedA = dsA.rawData.length;
+
+  if (joinType === 'union') {
+    estimatedRows = dsA.rawData.length + dsB.rawData.length;
+  } else {
+    estimatedRows = 0;
+    matchedKeys.forEach(key => {
+      estimatedRows += (diagA.counts.get(key) || 0) * (diagB.counts.get(key) || 0);
+    });
+    const matchedARows = matchedKeys.reduce((sum, key) => sum + diagA.counts.get(key), 0);
+    const matchedBRows = matchedKeys.reduce((sum, key) => sum + diagB.counts.get(key), 0);
+    unmatchedA = dsA.rawData.length - matchedARows - diagA.missing;
+    const unmatchedB = dsB.rawData.length - matchedBRows - diagB.missing;
+    if (joinType === 'left' || joinType === 'full') estimatedRows += unmatchedA;
+    if (joinType === 'full') estimatedRows += unmatchedB;
   }
 
+  const relationship = diagA.duplicateKeys === 0 && diagB.duplicateKeys === 0
+    ? 'One-to-one'
+    : diagA.duplicateKeys === 0
+      ? 'One-to-many'
+      : diagB.duplicateKeys === 0
+        ? 'Many-to-one'
+        : 'Many-to-many';
+  const estimatedGrowth = dsA.rawData.length
+    ? ((estimatedRows - dsA.rawData.length) / dsA.rawData.length) * 100
+    : 0;
+  const hasDuplicates = diagA.duplicateKeys > 0 || diagB.duplicateKeys > 0;
+
+  const diagnostics = document.getElementById('joinDiagnostics');
+  if (diagnostics) {
+    diagnostics.innerHTML = `
+      <div class="join-diagnostic-card ${hasDuplicates ? 'warning' : ''}"><span>Relationship</span><strong>${relationship}</strong></div>
+      <div class="join-diagnostic-card"><span>Matched Keys</span><strong>${matchedKeys.length.toLocaleString()}</strong></div>
+      <div class="join-diagnostic-card ${hasDuplicates ? 'warning' : ''}"><span>Duplicate Keys</span><strong>${(diagA.duplicateKeys + diagB.duplicateKeys).toLocaleString()}</strong></div>
+      <div class="join-diagnostic-card"><span>Estimated Output</span><strong>${estimatedRows.toLocaleString()} rows</strong></div>
+      <div class="join-diagnostic-card"><span>Estimated Change</span><strong>${estimatedGrowth >= 0 ? '+' : ''}${estimatedGrowth.toFixed(1)}%</strong></div>
+      <div class="join-diagnostic-card"><span>Missing Keys</span><strong>${diagA.missing + diagB.missing}</strong></div>`;
+  }
+
+  let rationale = '';
+  if (joinType === 'inner') {
+    rationale = `<strong>Inner Join:</strong> Keeps only matching keys. Estimated result: <strong>${estimatedRows.toLocaleString()}</strong> rows.`;
+  } else if (joinType === 'left') {
+    rationale = `<strong>Left Outer Join:</strong> Keeps all <strong>${dsA.rawData.length.toLocaleString()}</strong> Table A rows. Estimated result: <strong>${estimatedRows.toLocaleString()}</strong> rows.`;
+  } else if (joinType === 'full') {
+    rationale = `<strong>Full Outer Join:</strong> Keeps matched and unmatched rows from both tables. Estimated result: <strong>${estimatedRows.toLocaleString()}</strong> rows.`;
+  } else {
+    rationale = `<strong>Vertical Concatenate:</strong> Stacks both tables without key matching. Estimated result: <strong>${estimatedRows.toLocaleString()}</strong> rows.`;
+  }
+  rationale += '<br><small>Cardinality is key-dependent. Duplicate keys multiply output rows; join cost is O(|R| + |S| + |output|).</small>';
+  if (hasDuplicates) rationale += '<br><small><strong>Warning:</strong> Duplicate keys detected. Review the preview before executing.</small>';
+  if (diagA.missing || diagB.missing) rationale += '<br><small><strong>Warning:</strong> Empty join keys are excluded from key matching.</small>';
   rationaleBox.innerHTML = rationale;
+
+  const previewRows = buildJoinPreview(dsA, dsB, keyA, keyB, joinType);
+  const previewHead = document.getElementById('joinPreviewHead');
+  const previewBody = document.getElementById('joinPreviewBody');
+  const previewCount = document.getElementById('joinPreviewCount');
+  if (previewCount) previewCount.textContent = `${previewRows.length} preview rows · ${estimatedRows.toLocaleString()} estimated total`;
+  if (previewRows.length && previewHead && previewBody) {
+    const columns = [...new Set(previewRows.flatMap(row => Object.keys(row)))].slice(0, 10);
+    previewHead.innerHTML = `<tr>${columns.map(col => `<th>${escapeHTML(col)}</th>`).join('')}</tr>`;
+    previewBody.innerHTML = previewRows.map(row => `<tr>${columns.map(col => `<td>${escapeHTML(row[col] ?? '')}</td>`).join('')}</tr>`).join('');
+  } else if (previewHead && previewBody) {
+    previewHead.innerHTML = '';
+    previewBody.innerHTML = '<tr><td>No matching preview rows</td></tr>';
+  }
+
+  if (window.lucide) window.lucide.createIcons();
 }
 
 /**
@@ -369,61 +581,8 @@ window.executeDatasetJoin = function () {
     return;
   }
 
-  let mergedRows = [];
+  let mergedRows = executeJoinRows(dsA, dsB, keyA, keyB, joinType);
   const mergedName = `merged_${dsA.fileName.split('.')[0]}_${dsB.fileName.split('.')[0]}.csv`;
-
-  if (joinType === 'union') {
-    // Vertical Concatenation
-    mergedRows = [...dsA.rawData, ...dsB.rawData];
-  } else {
-    // Relational Hash Join
-    const mapB = new Map();
-    dsB.rawData.forEach(rowB => {
-      const k = String(rowB[keyB] ?? '').trim().toLowerCase();
-      if (k !== '') {
-        if (!mapB.has(k)) mapB.set(k, []);
-        mapB.get(k).push(rowB);
-      }
-    });
-
-    const matchedKeysB = new Set();
-
-    dsA.rawData.forEach(rowA => {
-      const kA = String(rowA[keyA] ?? '').trim().toLowerCase();
-      const matchesB = mapB.get(kA);
-
-      if (matchesB && matchesB.length > 0) {
-        matchedKeysB.add(kA);
-        matchesB.forEach(matchB => {
-          const combined = { ...rowA };
-          Object.keys(matchB).forEach(colB => {
-            const finalCol = (colB !== keyB && combined[colB] !== undefined) ? `${colB}_${dsB.fileName.split('.')[0]}` : colB;
-            combined[finalCol] = matchB[colB];
-          });
-          mergedRows.push(combined);
-        });
-      } else if (joinType === 'left' || joinType === 'full') {
-        const combined = { ...rowA };
-        dsB.columnNames.forEach(colB => {
-          if (combined[colB] === undefined) combined[colB] = '';
-        });
-        mergedRows.push(combined);
-      }
-    });
-
-    if (joinType === 'full') {
-      dsB.rawData.forEach(rowB => {
-        const kB = String(rowB[keyB] ?? '').trim().toLowerCase();
-        if (!matchedKeysB.has(kB)) {
-          const combined = { ...rowB };
-          dsA.columnNames.forEach(colA => {
-            if (combined[colA] === undefined) combined[colA] = '';
-          });
-          mergedRows.push(combined);
-        }
-      });
-    }
-  }
 
   if (mergedRows.length === 0) {
     showToast('Join resulted in 0 matching rows. Check selected key columns.', 'error');
